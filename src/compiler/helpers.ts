@@ -43,20 +43,7 @@ export function buildClickGapLine(
   return `${clicks.length - groundedClicks.length} click event(s) do not have a nearby selected frame.`
 }
 
-export function frameReasonLabel(reason: SelectedFrame["reason"] | string): string {
-  const labels: Record<string, string> = {
-    start: "start of recording",
-    pointer_pause: "cursor paused",
-    speech_deixis: "speech deixis",
-    visual_change: "visual change",
-    click: "click-aligned",
-    end: "end of recording",
-    baseline: "baseline sample",
-  }
-  return labels[reason] ?? reason
-}
-
-export function enricherFrameReasonLabel(reason: string): string {
+export function frameReasonLabel(reason: string): string {
   const labels: Record<string, string> = {
     start: "start of recording",
     pointer_pause: "cursor paused",

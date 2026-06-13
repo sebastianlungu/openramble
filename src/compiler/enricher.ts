@@ -13,10 +13,14 @@ import {
 } from "../opencode-bridge/client.js"
 import {
   formatTimestamp,
-  buildCoverageGapLine,
-  buildClickGapLine,
-  enricherFrameReasonLabel,
+  frameReasonLabel,
 } from "./helpers.js"
+import {
+  transcriptTimingLine,
+  frameEvidenceLines,
+  cursorEvidenceLines,
+  captureGapLines,
+} from "./evidence.js"
 
 export const ENRICHMENT_SYSTEM_PROMPT = `You are a context engineering assistant for OmniCapture.
 
@@ -279,15 +283,19 @@ function buildEnrichmentUserText(input: EnrichPromptInput): string {
   lines.push("")
 
   lines.push("## Visual Evidence")
-  lines.push(...buildFrameEvidence(input.frames, input.screenshotPaths))
+  lines.push(...frameEvidenceLines(input.frames, input.screenshotPaths))
   lines.push("")
 
   lines.push("## Cursor Timeline")
-  lines.push(...buildCursorEvidence(input.cursorEvents))
+  lines.push(...cursorEvidenceLines(input.cursorEvents))
   lines.push("")
 
   lines.push("## Capture Gaps")
-  lines.push(...buildCaptureGaps(input))
+  lines.push(...captureGapLines({
+    segments: input.segments,
+    frames: input.frames,
+    cursorEvents: input.cursorEvents,
+  }))
   lines.push("")
 
   if (input.segments && input.segments.length > 0 && input.frames && input.frames.length > 0) {
@@ -300,77 +308,6 @@ function buildEnrichmentUserText(input: EnrichPromptInput): string {
   lines.push(...input.screenshotPaths.map((p) => `- ${p}`))
 
   return lines.join("\n")
-}
-
-function transcriptTimingLine(segments?: TranscriptSegment[]): string {
-  if (!segments || segments.length === 0) {
-    return "timestamped transcript segments were not available."
-  }
-
-  const first = segments[0]!
-  const last = segments[segments.length - 1]!
-  return `${segments.length} timestamped segment(s) covering T+${formatTimestamp(first.startMs)} to T+${formatTimestamp(last.endMs)}.`
-}
-
-function buildFrameEvidence(
-  frames: SelectedFrame[] | undefined,
-  screenshotPaths: string[]
-): string[] {
-  if (!frames || frames.length === 0) {
-    return [
-      `- Screenshot files: ${screenshotPaths.length} available local artifact(s).`,
-      "- No selected-frame metadata with timestamps was supplied.",
-    ]
-  }
-
-  const first = frames[0]!
-  const last = frames[frames.length - 1]!
-  const lines = [
-    `- Selected frames: ${frames.length} covering T+${formatTimestamp(first.timestampMs)} to T+${formatTimestamp(last.timestampMs)}.`,
-  ]
-  for (const frame of frames) {
-    lines.push(`- T+${formatTimestamp(frame.timestampMs)} - ${frame.path} (${enricherFrameReasonLabel(frame.reason)})`)
-  }
-  return lines
-}
-
-function buildCursorEvidence(cursorEvents?: CursorEvent[]): string[] {
-  if (!cursorEvents || cursorEvents.length === 0) {
-    return ["- No cursor timeline was supplied."]
-  }
-
-  const first = cursorEvents[0]!
-  const last = cursorEvents[cursorEvents.length - 1]!
-  const clickTimes = cursorEvents
-    .filter((event) => event.kind === "click")
-    .map((event) => `T+${formatTimestamp(event.timestampMs)}`)
-  const lines = [
-    `- Cursor activity: ${cursorEvents.length} events covering T+${formatTimestamp(first.timestampMs)} to T+${formatTimestamp(last.timestampMs)}.`,
-  ]
-
-  if (clickTimes.length > 0) {
-    lines.push(`- Click timestamps: ${clickTimes.join(", ")}.`)
-  }
-
-  return lines
-}
-
-function buildCaptureGaps(input: EnrichPromptInput): string[] {
-  const lines: string[] = []
-
-  if (!input.segments || input.segments.length === 0) {
-    lines.push("- Timestamped transcript segments were not available, so speech-to-UI grounding is weaker.")
-  }
-
-  const coverageGap = buildCoverageGapLine(input.frames, input.cursorEvents)
-  if (coverageGap) lines.push(`- ${coverageGap}`)
-
-  const clickGap = buildClickGapLine(input.frames, input.cursorEvents)
-  if (clickGap) lines.push(`- ${clickGap}`)
-
-  return lines.length > 0
-    ? lines
-    : ["- No obvious capture gaps were detected from the supplied artifacts."]
 }
 
 function findAlignedFrame(frames: SelectedFrame[], segment: TranscriptSegment): SelectedFrame | undefined {
@@ -425,7 +362,7 @@ function buildTimeline(
     }
 
     if (alignedFrame) {
-      const reasonLabel = enricherFrameReasonLabel(alignedFrame.reason)
+      const reasonLabel = frameReasonLabel(alignedFrame.reason)
       lines.push(`**Frame at T+${formatTimestamp(alignedFrame.timestampMs)}**: ${alignedFrame.path} (${reasonLabel})`)
     }
 
