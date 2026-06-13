@@ -32,9 +32,9 @@ struct CaptureBannerTests {
 
     @Test func modelTransitionsToProcessing() {
         let model = CaptureBannerModel()
-        model.state = .processing
-        if case .processing = model.state {
-            // pass
+        model.state = .processing(elapsed: 3)
+        if case .processing(let elapsed) = model.state {
+            #expect(elapsed == 3)
         } else {
             Issue.record("Expected .processing state")
         }
@@ -109,7 +109,18 @@ struct CaptureBannerTests {
 
     @Test func modelPromptTextEmptyForProcessing() {
         let model = CaptureBannerModel()
-        model.state = .processing
+        model.state = .processing(elapsed: 5)
         #expect(model.promptText.isEmpty)
+    }
+
+    @Test func modelProcessingElapsedIncrements() {
+        let model = CaptureBannerModel()
+        model.state = .processing(elapsed: 0)
+        model.state = .processing(elapsed: 7)
+        if case .processing(let elapsed) = model.state {
+            #expect(elapsed == 7)
+        } else {
+            Issue.record("Expected .processing state")
+        }
     }
 }

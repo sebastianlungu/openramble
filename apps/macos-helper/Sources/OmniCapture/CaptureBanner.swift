@@ -63,9 +63,23 @@ struct CaptureBannerView: View {
                     .foregroundColor(.white.opacity(0.8))
                 Spacer()
 
-            case .processing:
-                AuroraGradientView()
-                    .frame(height: 40)
+            case .processing(let elapsed):
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                    let t = timeline.date.timeIntervalSince1970
+                    let opacity = 0.45 + 0.55 * sin(t * .pi * 2)
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 8, height: 8)
+                        .opacity(opacity)
+                }
+                .frame(width: 8, height: 8)
+                Text("Processing")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                Text(Self.elapsedDisplay(seconds: elapsed))
+                    .font(.system(size: 12, weight: .regular, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.8))
+                Spacer()
 
             case .done:
                 Image(systemName: "checkmark.circle.fill")
@@ -111,8 +125,6 @@ struct CaptureBannerView: View {
     @ViewBuilder
     private var bannerBackground: some View {
         switch model.state {
-        case .processing:
-            Color.clear
         default:
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.black.opacity(0.85))
@@ -187,8 +199,9 @@ final class CaptureBanner: @unchecked Sendable {
             guard let self else { return }
             self.invalidateTimer()
             self.removeClickOutsideMonitor()
-            self.model.state = .processing
+            self.model.state = .processing(elapsed: 0)
             self.model.isExpanded = false
+            self.startTimer()
             self.window?.ignoresMouseEvents = true
         }
     }
@@ -274,6 +287,8 @@ final class CaptureBanner: @unchecked Sendable {
                 guard let self else { return }
                 if case .recording(let elapsed) = self.model.state {
                     self.model.state = .recording(elapsed: elapsed + 1)
+                } else if case .processing(let elapsed) = self.model.state {
+                    self.model.state = .processing(elapsed: elapsed + 1)
                 }
             }
         }

@@ -138,7 +138,7 @@ enum CaptureState {
 
 enum CaptureBannerState: Sendable {
     case recording(elapsed: Int)
-    case processing
+    case processing(elapsed: Int)
     case done(promptText: String)
     case error(String)
 }
@@ -162,6 +162,10 @@ struct PermissionStatus {
     let microphone: Bool
     let speechRecognition: Bool
     let accessibility: Bool
+
+    var onlyScreenRecordingIsMissing: Bool {
+        !screenRecording && microphone && speechRecognition
+    }
 
     var allGranted: Bool {
         screenRecording && microphone && speechRecognition

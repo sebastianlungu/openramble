@@ -1,10 +1,15 @@
 import { describe, it, expect } from "bun:test"
 import {
+  DEFAULT_OMNICAPTURE_MODEL,
   findModelCapability,
   getModelCapabilities,
 } from "../opencode-bridge/client.js"
 
 describe("OpenCode client capability parsing", () => {
+  it("hard defaults OmniCapture to OpenAI GPT-5.4", () => {
+    expect(DEFAULT_OMNICAPTURE_MODEL).toBe("openai/gpt-5.4")
+  })
+
   it("reads image support from current capabilities payload", async () => {
     const report = await getModelCapabilities({
       config: {

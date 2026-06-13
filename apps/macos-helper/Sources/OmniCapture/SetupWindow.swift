@@ -13,9 +13,14 @@ final class SetupWindow: NSObject, NSWindowDelegate, @unchecked Sendable {
         DispatchQueue.main.async { [weak self] in
             guard let self = self, self.window == nil else { return }
 
-            let view = SetupView(onDismiss: { [weak self] in
-                self?.hide()
-            })
+            let view = SetupView(
+                onDismiss: { [weak self] in
+                    self?.hide()
+                },
+                onRelaunch: { [weak self] in
+                    self?.relaunch()
+                }
+            )
 
             let hostingView = NSHostingView(rootView: view)
             hostingView.frame.size = hostingView.fittingSize
@@ -77,6 +82,17 @@ final class SetupWindow: NSObject, NSWindowDelegate, @unchecked Sendable {
         refreshStatus()
     }
 
+    private func relaunch() {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, error in
+            guard error == nil else { return }
+            Task { @MainActor in
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     func windowWillClose(_ notification: Notification) {
         let shouldNotify = !closesProgrammatically
         closesProgrammatically = false
@@ -96,6 +112,7 @@ final class SetupWindow: NSObject, NSWindowDelegate, @unchecked Sendable {
 struct SetupView: View {
     @State var permissionStatus: PermissionStatus? = nil
     let onDismiss: () -> Void
+    let onRelaunch: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -150,7 +167,7 @@ struct SetupView: View {
 
             Divider()
 
-            Text("After enabling Screen Recording, fully quit and reopen OmniCapture. The current process can stay stale even after the toggle turns on.")
+            Text("Screen Recording is special on macOS: after you turn the toggle on, the current OmniCapture process can stay denied until restart. If the toggle is already on in System Settings, use Relaunch.")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -161,6 +178,12 @@ struct SetupView: View {
                     Text("All permissions granted — you're ready!")
                         .font(.caption)
                         .foregroundColor(.green)
+                } else if permissionStatus?.onlyScreenRecordingIsMissing == true {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                        .foregroundColor(.yellow)
+                    Text("Screen Recording is the only thing left. If the toggle is already on, relaunch OmniCapture.")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
                 } else {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.yellow)
@@ -173,6 +196,9 @@ struct SetupView: View {
                     Task {
                         permissionStatus = await Permissions.checkAll()
                     }
+                }
+                if permissionStatus?.screenRecording != true {
+                    Button("Relaunch") { onRelaunch() }
                 }
                 Button("Close") { onDismiss() }
                 .keyboardShortcut(.return, modifiers: [])

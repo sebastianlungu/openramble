@@ -6,7 +6,7 @@ user-invocable: true
 
 # Sign OmniCapture
 
-Builds the macOS helper in release mode, installs to /Applications, and signs with the stable `OmniCapture Dev` identity so TCC permissions persist across rebuilds.
+Builds the macOS helper in release mode, installs to /Applications, bootstraps the stable `OmniCapture Dev` identity if missing, and resets stale Screen Recording TCC when the signing identity changed.
 
 ## Usage
 
@@ -16,24 +16,18 @@ Builds the macOS helper in release mode, installs to /Applications, and signs wi
 
 ## What it does
 
-1. `swift build -c release` in `apps/macos-helper`
-2. Kills any running OmniCapture instance
-3. Copies binary to `/Applications/OmniCapture.app/Contents/MacOS/`
-4. Signs with `OmniCapture Dev` identity (stable CDHash)
+1. Runs `apps/macos-helper/install.sh`
+2. Bootstraps `OmniCapture Dev` in the login keychain if missing
+3. Resets stale `ScreenCapture` TCC if the previously installed app used a different identity
+4. Installs and signs the app at `/Applications/OmniCapture.app`
 5. Verifies signature
 
 ## Implementation
 
-Run these commands sequentially:
+Run this command from the repo root:
 
 ```bash
-cd /Users/sebastianlungu/omnicaptain/apps/macos-helper
-swift build -c release
-pkill -f "OmniCapture.app" 2>/dev/null || true
-sleep 1
-cp .build/release/omnicapture /Applications/OmniCapture.app/Contents/MacOS/omnicapture
-codesign --force --sign "OmniCapture Dev" --identifier "ai.omnicaptain.macos-helper" /Applications/OmniCapture.app
-codesign --verify --verbose /Applications/OmniCapture.app
+bash "apps/macos-helper/install.sh"
 ```
 
 Then report:
@@ -41,21 +35,7 @@ Then report:
 - Signature verification result
 - Remind user: `open -a OmniCapture`
 
-## Keychain note
+## Notes
 
-The `OmniCapture Dev` cert lives in `/tmp/oc.keychain`. After a reboot, re-add it:
-
-```bash
-security list-keychains -d user -s /tmp/oc.keychain ~/Library/Keychains/login.keychain-db
-```
-
-If the cert is missing entirely, recreate with:
-
-```bash
-mkdir -p /tmp/oc
-openssl req -x509 -newkey rsa:2048 -keyout /tmp/oc/key.pem -out /tmp/oc/cert.pem -days 7300 -nodes -subj "/CN=OmniCapture Dev" -addext "keyUsage=digitalSignature" -addext "extendedKeyUsage=codeSigning"
-security create-keychain -p "" /tmp/oc.keychain
-security import /tmp/oc/key.pem -k /tmp/oc.keychain -t priv -T /usr/bin/codesign
-security import /tmp/oc/cert.pem -k /tmp/oc.keychain -t cert -T /usr/bin/codesign
-security list-keychains -d user -s /tmp/oc.keychain ~/Library/Keychains/login.keychain-db
-```
+- `install.sh` bootstraps the `OmniCapture Dev` cert into the login keychain if it is missing.
+- Screen Recording still requires a full app relaunch after the user turns the toggle on in System Settings. That macOS behavior is unavoidable.
