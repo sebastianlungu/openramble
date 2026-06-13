@@ -1,0 +1,17 @@
+{
+  "name": "omnicaptain",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Zero-friction multimodal intent compiler for coding agents",
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.16.2"
+  },
+  "scripts": {
+    "test": "bun test",
+    "proof": "bun run src/opencode-bridge/proof.ts",
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+.omnicaptain/
+bun.lock
+*.log
+
+# macOS build artifacts
+apps/macos-helper/.build/
+apps/macos-helper/*.app/
+apps/macos-helper/Package.resolved
+
+# docs
+docs/
+
