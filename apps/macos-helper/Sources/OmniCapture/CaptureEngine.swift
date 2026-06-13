@@ -72,6 +72,11 @@ final class CaptureEngine: @unchecked Sendable {
         // no-op: banner no longer shows shortcut hints
     }
 
+    /// Surfaces an error in the floating banner instead of a modal alert.
+    func showError(_ message: String) {
+        captureBanner.showError(message)
+    }
+
     /// Called from menu bar — toggles capture on/off
     func triggerToggle() {
         if state == .idle || state == .complete {
@@ -87,6 +92,9 @@ final class CaptureEngine: @unchecked Sendable {
             self.captureBanner.hide()
             self.state = .idle
             self.onStateChange?(.idle)
+        }
+        captureBanner.onBannerClick = { [weak self] in
+            self?.captureBanner.toggleExpand()
         }
     }
 

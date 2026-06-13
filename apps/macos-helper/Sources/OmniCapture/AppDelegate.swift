@@ -152,12 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         captureEngine.onError = { error in
             Task { @MainActor in
-                let alert = NSAlert()
-                alert.messageText = "Capture Error"
-                alert.informativeText = error.localizedDescription
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
+                self.captureEngine.showError(error.localizedDescription)
             }
         }
     }

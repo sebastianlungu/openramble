@@ -8,6 +8,9 @@ apps/macos-helper/.build/
 apps/macos-helper/*.app/
 apps/macos-helper/Package.resolved
 
+# test coverage
+coverage/
+
 # docs
 docs/
 
