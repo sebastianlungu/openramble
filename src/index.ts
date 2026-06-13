@@ -16,8 +16,10 @@ import { enrichPrompt, type EnrichPromptInput } from "./compiler/enricher.js"
 import { validateRun, formatBlockerReport } from "./compiler/validate.js"
 import type { TranscriptSegment, SelectedFrame, CursorEvent } from "./compiler/schema.js"
 
-function parseArgs(raw: string[]): Record<string, string | string[]> {
-  const result: Record<string, string | string[]> = {}
+type ParsedArgs = Record<string, string | string[]>
+
+function parseArgs(raw: string[]): ParsedArgs {
+  const result: ParsedArgs = {}
   let i = 0
   while (i < raw.length) {
     const arg = raw[i]!
@@ -93,107 +95,100 @@ async function resolveSessionId(
   }
 }
 
-async function main() {
-  const raw = process.argv.slice(2)
-  const args = parseArgs(raw)
-  const command = (args._command as string) ?? "help"
+function printHelp(): void {
+  console.log(`OmniCaptain v0.1.0`)
+  console.log(`Server URL: ${discoverServerUrl()}`)
+  console.log()
+  console.log("Usage: bun run src/index.ts compile [options]")
+  console.log("       bun run src/index.ts append-prompt [options]")
+  console.log()
+  console.log("Options:")
+  console.log("  --transcript <path>       Required. Path to transcript file")
+  console.log("  --screenshots <path>...   1-20 screenshot paths (.png/.jpg/.jpeg)")
+  console.log("  --browser <path>          Optional browser metadata JSON")
+  console.log("  --audio <path>            Optional audio artifact (stored only)")
+  console.log("  --video <path>            Optional local screen recording artifact")
+  console.log("  --model <model>           Default: OpenCode configured model")
+  console.log("  --opencode-server <url>   Default: http://localhost:4096")
+  console.log("  --session-id <id>         Default: from OPENCODE_SESSION_ID env")
+  console.log("  --out <path>              Default: ./.omnicaptain/runs")
+  console.log("  --enrich false            Skip AI visual compilation; artifacts only")
+  console.log("  --no-preview              Compile artifacts without interactive preview")
+  console.log("  --auto-send               Auto-send without preview (optional)")
+  console.log()
+  console.log("Timeline data (optional, read from run root if present):")
+  console.log("  transcript-segments.json  Timestamped transcript segments")
+  console.log("  selected-frames.json      Selected frames with timestamps and reasons")
+  console.log("  cursor-timeline.json       Cursor events with positions and timestamps")
+  console.log()
+  console.log("append-prompt options:")
+  console.log("  --prompt-file <path>              Required. Path to visible-prompt.md")
+  console.log("  --hidden-context-file <path>      Optional path to hidden-context.json")
+  console.log("  --opencode-server <url>           Default: http://localhost:4096")
+  console.log("  --session-id <id>                 Default: from OPENCODE_SESSION_ID env")
+  console.log("  --run-root <path>                 Optional: for handoff-result.json output")
+}
 
-  if (command !== "compile" && command !== "append-prompt") {
-    console.log(`OmniCaptain v0.1.0`)
-    console.log(`Server URL: ${discoverServerUrl()}`)
-    console.log()
-    console.log("Usage: bun run src/index.ts compile [options]")
-    console.log("       bun run src/index.ts append-prompt [options]")
-    console.log()
-    console.log("Options:")
-    console.log("  --transcript <path>       Required. Path to transcript file")
-    console.log("  --screenshots <path>...   1-20 screenshot paths (.png/.jpg/.jpeg)")
-    console.log("  --browser <path>          Optional browser metadata JSON")
-    console.log("  --audio <path>            Optional audio artifact (stored only)")
-    console.log("  --video <path>            Optional local screen recording artifact")
-    console.log("  --model <model>           Default: OpenCode configured model")
-    console.log("  --opencode-server <url>   Default: http://localhost:4096")
-    console.log("  --session-id <id>         Default: from OPENCODE_SESSION_ID env")
-    console.log("  --out <path>              Default: ./.omnicaptain/runs")
-    console.log("  --enrich false            Skip AI visual compilation; artifacts only")
-    console.log("  --no-preview              Compile artifacts without interactive preview")
-    console.log("  --auto-send               Auto-send without preview (optional)")
-    console.log()
-    console.log("Timeline data (optional, read from run root if present):")
-    console.log("  transcript-segments.json  Timestamped transcript segments")
-    console.log("  selected-frames.json      Selected frames with timestamps and reasons")
-    console.log("  cursor-timeline.json       Cursor events with positions and timestamps")
-    console.log()
-    console.log("append-prompt options:")
-    console.log("  --prompt-file <path>              Required. Path to visible-prompt.md")
-    console.log("  --hidden-context-file <path>      Optional path to hidden-context.json")
-    console.log("  --opencode-server <url>           Default: http://localhost:4096")
-    console.log("  --session-id <id>                 Default: from OPENCODE_SESSION_ID env")
-    console.log("  --run-root <path>                 Optional: for handoff-result.json output")
-    return
+async function runAppendPrompt(args: ParsedArgs): Promise<void> {
+  const promptFilePath = args["prompt-file"] as string
+  if (!promptFilePath) {
+    formatError("--prompt-file is required")
+    process.exit(1)
+  }
+  if (!existsSync(resolve(promptFilePath))) {
+    formatError(`Prompt file not found: ${promptFilePath}`)
+    process.exit(1)
   }
 
-  if (command === "append-prompt") {
-    const promptFilePath = args["prompt-file"] as string
-    if (!promptFilePath) {
-      formatError("--prompt-file is required")
-      process.exit(1)
-    }
-    if (!existsSync(resolve(promptFilePath))) {
-      formatError(`Prompt file not found: ${promptFilePath}`)
-      process.exit(1)
-    }
-
-    const hiddenContextFilePath = args["hidden-context-file"] as string | undefined
-    if (hiddenContextFilePath && !existsSync(resolve(hiddenContextFilePath))) {
-      formatError(`Hidden context file not found: ${hiddenContextFilePath}`)
-      process.exit(1)
-    }
-
-    const opencodeServerUrl = (args["opencode-server"] as string) ?? discoverServerUrl()
-    const sessionIdEnv = process.env.OPENCODE_SESSION_ID
-    const sessionId = (args["session-id"] as string) ?? sessionIdEnv
-    const runRoot = args["run-root"] as string | undefined
-
-    const resolvedSessionId = await resolveSessionId(opencodeServerUrl, sessionId)
-
-    const result = await appendPrompt({
-      promptFilePath: resolve(promptFilePath),
-      hiddenContextFilePath: hiddenContextFilePath ? resolve(hiddenContextFilePath) : undefined,
-      opencodeServerUrl,
-      sessionId: resolvedSessionId ?? null,
-      runRoot: runRoot ? resolve(runRoot) : undefined,
-    })
-
-    const appendFailed = !result.visiblePromptAppended
-    const writeStatus = appendFailed ? console.error : console.log
-
-    if (result.visiblePromptAppended) {
-      console.log("  Prompt appended to TUI")
-    } else {
-      writeStatus(`  Prompt saved to file`)
-    }
-
-    if (result.hiddenContextInjected) {
-      console.log("  Hidden context: injected via noReply")
-    } else if (hiddenContextFilePath) {
-      writeStatus("  Hidden context: saved as fallback")
-    }
-
-    if (result.errors.length > 0) {
-      writeStatus("  Errors:")
-      for (const e of result.errors) {
-        writeStatus(`    - ${e}`)
-      }
-    }
-
-    if (appendFailed) {
-      process.exit(1)
-    }
-
-    return
+  const hiddenContextFilePath = args["hidden-context-file"] as string | undefined
+  if (hiddenContextFilePath && !existsSync(resolve(hiddenContextFilePath))) {
+    formatError(`Hidden context file not found: ${hiddenContextFilePath}`)
+    process.exit(1)
   }
 
+  const opencodeServerUrl = (args["opencode-server"] as string) ?? discoverServerUrl()
+  const sessionIdEnv = process.env.OPENCODE_SESSION_ID
+  const sessionId = (args["session-id"] as string) ?? sessionIdEnv
+  const runRoot = args["run-root"] as string | undefined
+
+  const resolvedSessionId = await resolveSessionId(opencodeServerUrl, sessionId)
+
+  const result = await appendPrompt({
+    promptFilePath: resolve(promptFilePath),
+    hiddenContextFilePath: hiddenContextFilePath ? resolve(hiddenContextFilePath) : undefined,
+    opencodeServerUrl,
+    sessionId: resolvedSessionId ?? null,
+    runRoot: runRoot ? resolve(runRoot) : undefined,
+  })
+
+  const appendFailed = !result.visiblePromptAppended
+  const writeStatus = appendFailed ? console.error : console.log
+
+  if (result.visiblePromptAppended) {
+    console.log("  Prompt appended to TUI")
+  } else {
+    writeStatus(`  Prompt saved to file`)
+  }
+
+  if (result.hiddenContextInjected) {
+    console.log("  Hidden context: injected via noReply")
+  } else if (hiddenContextFilePath) {
+    writeStatus("  Hidden context: saved as fallback")
+  }
+
+  if (result.errors.length > 0) {
+    writeStatus("  Errors:")
+    for (const e of result.errors) {
+      writeStatus(`    - ${e}`)
+    }
+  }
+
+  if (appendFailed) {
+    process.exit(1)
+  }
+}
+
+async function runCompile(args: ParsedArgs): Promise<void> {
   const transcriptPath = (args.transcript as string) ?? ""
   if (!transcriptPath) {
     formatError("--transcript is required")
@@ -464,6 +459,19 @@ async function main() {
   } else {
     console.log("\n  Cancelled. Artifacts saved locally.")
     console.log(`  Run folder: ${runRoot}`)
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const command = (args._command as string) ?? "help"
+
+  if (command === "compile") {
+    await runCompile(args)
+  } else if (command === "append-prompt") {
+    await runAppendPrompt(args)
+  } else {
+    printHelp()
   }
 }
 
