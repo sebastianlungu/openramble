@@ -121,7 +121,7 @@ describe("Compiler", () => {
     })
 
     expect(result.warnings.length).toBeGreaterThan(0)
-    expect(result.promptDraft.confidence).toBe("low")
+    expect(result.promptDraft.confidence).toBe("medium")
   })
 
   it("confidence is medium with a single screenshot", () => {

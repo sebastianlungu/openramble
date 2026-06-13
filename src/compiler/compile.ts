@@ -12,11 +12,15 @@ import type {
   CursorEvent,
 } from "./schema.js"
 import {
-  formatTimestamp,
   buildCoverageGapLine,
   buildClickGapLine,
-  frameReasonLabel,
 } from "./helpers.js"
+import {
+  transcriptTimingLine,
+  frameEvidenceLines,
+  cursorEvidenceLines,
+  captureGapLines,
+} from "./evidence.js"
 
 export type CompileArgs = {
   transcript: string
@@ -92,13 +96,19 @@ export function generateVisiblePrompt(
   evidence: PromptEvidence = {}
 ): string {
   const transcriptEvidence = buildTranscriptEvidence(transcript, evidence.segments)
-  const visualEvidence = buildVisualEvidence(paths, evidence.frames)
-  const cursorEvidence = buildCursorEvidence(evidence.cursorEvents)
-  const captureGaps = buildCaptureGaps(transcript, paths, evidence)
+  const visualEvidence = frameEvidenceLines(evidence.frames, paths.screenshots.map((s) => s.rel)).join("\n")
+  const cursorEvidence = cursorEvidenceLines(evidence.cursorEvents).join("\n")
+  const captureGaps = captureGapLines({
+    segments: evidence.segments,
+    frames: evidence.frames,
+    cursorEvents: evidence.cursorEvents,
+    hasVideo: paths.video !== undefined,
+    deicticRisk: containsDeicticLanguage(transcript),
+  }).join("\n")
   const likelyTargetsSection = buildLikelyTargets(scoutHypotheses)
 
   return `## Intent
-${summarizeTranscript(transcript)}
+${trimTranscript(transcript)}
 
 ## Observed
 ${transcriptEvidence}
@@ -121,7 +131,7 @@ ${captureGaps}
 `
 }
 
-function summarizeTranscript(text: string): string {
+function trimTranscript(text: string): string {
   return text.trim().length > 0
     ? text.trim()
     : "[No transcript content provided]"
@@ -136,92 +146,6 @@ function buildTranscriptEvidence(
     lines.push(`- Raw transcript: ${transcript.trim()}`)
   }
   return lines.join("\n")
-}
-
-function transcriptTimingLine(segments?: TranscriptSegment[]): string {
-  if (!segments || segments.length === 0) {
-    return "no timestamped transcript segments were available."
-  }
-
-  const first = segments[0]!
-  const last = segments[segments.length - 1]!
-  return `${segments.length} timestamped segment(s) covering T+${formatTimestamp(first.startMs)} to T+${formatTimestamp(last.endMs)}.`
-}
-
-function buildVisualEvidence(
-  paths: InputPaths,
-  frames?: SelectedFrame[]
-): string {
-  if (!frames || frames.length === 0) {
-    return [
-      `- Screenshot files: ${paths.screenshots.length} available local artifact(s).`,
-      "- No selected-frame metadata with timestamps was supplied.",
-    ].join("\n")
-  }
-
-  const first = frames[0]!
-  const last = frames[frames.length - 1]!
-  const lines = [
-    `- Selected frames: ${frames.length} covering T+${formatTimestamp(first.timestampMs)} to T+${formatTimestamp(last.timestampMs)}.`,
-  ]
-  for (const frame of frames) {
-    lines.push(
-      `- T+${formatTimestamp(frame.timestampMs)} - ${frame.path} (${frameReasonLabel(frame.reason)})`
-    )
-  }
-  return lines.join("\n")
-}
-
-function buildCursorEvidence(cursorEvents?: CursorEvent[]): string {
-  if (!cursorEvents || cursorEvents.length === 0) {
-    return "- No cursor timeline was supplied."
-  }
-
-  const first = cursorEvents[0]!
-  const last = cursorEvents[cursorEvents.length - 1]!
-  const clickTimes = cursorEvents
-    .filter((event) => event.kind === "click")
-    .map((event) => `T+${formatTimestamp(event.timestampMs)}`)
-
-  const lines = [
-    `- Cursor activity: ${cursorEvents.length} events covering T+${formatTimestamp(first.timestampMs)} to T+${formatTimestamp(last.timestampMs)}.`,
-  ]
-
-  if (clickTimes.length > 0) {
-    lines.push(`- Click timestamps: ${clickTimes.join(", ")}.`)
-  }
-
-  return lines.join("\n")
-}
-
-function buildCaptureGaps(
-  transcript: string,
-  paths: InputPaths,
-  evidence: PromptEvidence
-): string {
-  const lines: string[] = []
-
-  if (!paths.video) {
-    lines.push("- No local screen video artifact was supplied.")
-  }
-
-  if (!evidence.segments || evidence.segments.length === 0) {
-    lines.push("- Timestamped transcript segments were not available, so speech-to-UI grounding is weaker.")
-  }
-
-  const coverageGap = buildCoverageGapLine(evidence.frames, evidence.cursorEvents)
-  if (coverageGap) lines.push(`- ${coverageGap}`)
-
-  const clickGap = buildClickGapLine(evidence.frames, evidence.cursorEvents)
-  if (clickGap) lines.push(`- ${clickGap}`)
-
-  if (containsDeicticLanguage(transcript) && (!evidence.segments || evidence.segments.length === 0)) {
-    lines.push("- The transcript uses deictic language such as 'this' or 'here', but the speech is not timestamped.")
-  }
-
-  return lines.length > 0
-    ? lines.join("\n")
-    : "- No obvious evidence gaps were detected from the supplied artifacts."
 }
 
 function buildEvidenceWarnings(args: CompileArgs): string[] {
@@ -363,21 +287,13 @@ export function compile(args: CompileArgs): CompileResult {
     title: "OmniCapture Compiled Prompt",
     visiblePrompt,
     hiddenContext,
-    confidence: args.screenshotPaths.length >= 1 ? "medium" : "low",
+    confidence: "medium" as const,
   }
-
-  const screenshots: SelectedFrame[] = args.screenshotPaths.map((p, i) => ({
-    id: `ss_${i}`,
-    timestampMs: Date.now(),
-    path: paths.screenshots[i]?.abs ?? p,
-    reason: "manual" as SelectedFrame["reason"],
-  }))
 
   return {
     promptDraft,
     errors,
     warnings,
-    screenshots,
     inputPaths: paths,
   }
 }

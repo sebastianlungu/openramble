@@ -78,7 +78,6 @@ export type CompileResult = {
   promptDraft: PromptDraft
   errors: string[]
   warnings: string[]
-  screenshots: SelectedFrame[]
   inputPaths: InputPaths
 }
 

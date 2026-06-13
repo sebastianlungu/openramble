@@ -293,7 +293,7 @@ Acceptance:
     expect(textPart.text).toContain("## Cursor Timeline")
     expect(textPart.text).toContain("T+00:28.9")
     expect(textPart.text).toContain("## Capture Gaps")
-    expect(textPart.text).toContain("timestamped transcript segments were not available")
+    expect(textPart.text).toContain("Timestamped transcript segments were not available")
   })
 
   it("fails hard when the default model does not support image input", async () => {
