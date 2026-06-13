@@ -123,4 +123,49 @@ struct CaptureBannerTests {
             Issue.record("Expected .processing state")
         }
     }
+
+    @Test func modelStateChangedAtTracksEachTransition() {
+        let model = CaptureBannerModel()
+        let initial = model.stateChangedAt
+
+        Thread.sleep(forTimeInterval: 0.01)
+
+        model.state = .processing(elapsed: 0)
+        #expect(model.stateChangedAt > initial)
+
+        let processing = model.stateChangedAt
+        Thread.sleep(forTimeInterval: 0.01)
+
+        model.state = .done(promptText: "ok")
+        #expect(model.stateChangedAt > processing)
+
+        let done = model.stateChangedAt
+        Thread.sleep(forTimeInterval: 0.01)
+
+        model.state = .error("nope")
+        #expect(model.stateChangedAt > done)
+
+        let errored = model.stateChangedAt
+        Thread.sleep(forTimeInterval: 0.01)
+
+        model.state = .recording(elapsed: 0)
+        #expect(model.stateChangedAt > errored)
+    }
+
+    @Test func modelStateChangedAtDoesNotAdvanceOnElapsedTick() {
+        let model = CaptureBannerModel()
+        let before = model.stateChangedAt
+
+        model.state = .recording(elapsed: 1)
+        model.state = .recording(elapsed: 2)
+        model.state = .recording(elapsed: 3)
+        #expect(model.stateChangedAt == before)
+
+        model.state = .processing(elapsed: 1)
+        #expect(model.stateChangedAt > before)
+
+        let afterKindChange = model.stateChangedAt
+        model.state = .processing(elapsed: 5)
+        #expect(model.stateChangedAt == afterKindChange)
+    }
 }

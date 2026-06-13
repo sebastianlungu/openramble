@@ -3,8 +3,23 @@ import AppKit
 
 @Observable
 final class CaptureBannerModel: @unchecked Sendable {
-    var state: CaptureBannerState = .recording(elapsed: 0)
+    var state: CaptureBannerState = .recording(elapsed: 0) {
+        didSet {
+            guard stateKind(oldValue) != stateKind(state) else { return }
+            stateChangedAt = Date()
+        }
+    }
     var isExpanded = false
+    var stateChangedAt: Date = Date()
+
+    private func stateKind(_ s: CaptureBannerState) -> Int {
+        switch s {
+        case .recording: return 0
+        case .processing: return 1
+        case .done: return 2
+        case .error: return 3
+        }
+    }
 
     var promptText: String {
         if case .done(let text) = state { return text }
@@ -44,95 +59,114 @@ struct CaptureBannerView: View {
     @ViewBuilder
     private var bannerRow: some View {
         HStack(spacing: 8) {
+            statusIndicator
+                .frame(width: 14, height: 14)
             switch model.state {
-            case .recording(let elapsed):
-                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-                    let t = timeline.date.timeIntervalSince1970
-                    let opacity = 0.5 + 0.5 * sin(t * .pi * 2)
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
-                        .opacity(opacity)
-                }
-                .frame(width: 8, height: 8)
-                Text("Recording")
+            case .recording(let elapsed), .processing(let elapsed):
+                Text(labelForActiveState)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
                 Text(Self.elapsedDisplay(seconds: elapsed))
                     .font(.system(size: 12, weight: .regular, design: .monospaced))
                     .foregroundColor(.white.opacity(0.8))
                 Spacer()
-
-            case .processing(let elapsed):
-                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-                    let t = timeline.date.timeIntervalSince1970
-                    let opacity = 0.45 + 0.55 * sin(t * .pi * 2)
-                    Circle()
-                        .fill(Color.blue)
-                        .frame(width: 8, height: 8)
-                        .opacity(opacity)
-                }
-                .frame(width: 8, height: 8)
-                Text("Processing")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                Text(Self.elapsedDisplay(seconds: elapsed))
-                    .font(.system(size: 12, weight: .regular, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
-                Spacer()
-
             case .done:
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.green)
                 Text("Done")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
-                Text("Copied")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(copiedPulseOpacity))
-                    .onAppear { startCopiedPulse() }
+                copiedBadge
                 Spacer()
-
+                expandChevron
             case .error(let message):
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.red)
                 Text(message)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.red)
                     .lineLimit(2)
                     .truncationMode(.tail)
                 Spacer()
+                expandChevron
             }
         }
         .frame(height: 40)
         .padding(.horizontal, 14)
         .background(bannerBackground)
-        .contentShape(Rectangle())
-        .onTapGesture {
+        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: model.stateChangedAt)
+    }
+
+    private var labelForActiveState: String {
+        switch model.state {
+        case .recording: return "Recording"
+        case .processing: return "Processing"
+        default: return ""
+        }
+    }
+
+    @ViewBuilder
+    private var statusIndicator: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+            let t = timeline.date.timeIntervalSince1970
+            let stateT = max(0, timeline.date.timeIntervalSince(model.stateChangedAt))
+            statusContent(t: t, stateT: stateT)
+        }
+    }
+
+    @ViewBuilder
+    private func statusContent(t: TimeInterval, stateT: TimeInterval) -> some View {
+        ZStack {
+            PulseDot(
+                speed: isProcessing ? 0.85 : 1.4,
+                baseOpacity: isProcessing ? 0.4 : 0.55,
+                amplitude: isProcessing ? 0.6 : 0.45,
+                t: t,
+                stateT: stateT
+            )
+            .foregroundStyle(pulseColor)
+            .animation(.easeInOut(duration: 0.25), value: stateKind)
+
             switch model.state {
+            case .recording, .processing:
+                EmptyView()
             case .done:
-                onToggleExpand?()
+                DoneCheck(t: t, stateT: stateT)
+                    .transition(.scale.combined(with: .opacity))
             case .error:
-                onToggleExpand?()
-            default:
-                break
+                ErrorIndicator(t: t, stateT: stateT)
+                    .transition(.scale.combined(with: .opacity))
             }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.78), value: stateKind)
+    }
+
+    private var isProcessing: Bool {
+        if case .processing = model.state { return true }
+        return false
+    }
+
+    private var pulseColor: Color {
+        switch model.state {
+        case .recording, .error: return .red
+        case .processing: return .blue
+        case .done: return .green
+        }
+    }
+
+    private var stateKind: Int {
+        switch model.state {
+        case .recording: return 0
+        case .processing: return 1
+        case .done: return 2
+        case .error: return 3
         }
     }
 
     @ViewBuilder
     private var bannerBackground: some View {
-        switch model.state {
-        default:
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.black.opacity(0.85))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
-        }
+        RoundedRectangle(cornerRadius: 10)
+            .fill(Color.black.opacity(0.85))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+            )
     }
 
     @ViewBuilder
@@ -148,16 +182,107 @@ struct CaptureBannerView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
         }
+        .scrollIndicators(.visible)
         .frame(maxHeight: maxHeight)
         .background(Color.black.opacity(0.92))
     }
 
-    @State private var copiedPulseOpacity: Double = 1.0
+    @ViewBuilder
+    private var expandChevron: some View {
+        Image(systemName: "chevron.down")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundColor(.white.opacity(0.6))
+            .rotationEffect(.degrees(model.isExpanded ? 180 : 0))
+            .animation(.easeInOut(duration: 0.2), value: model.isExpanded)
+    }
 
-    private func startCopiedPulse() {
-        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-            copiedPulseOpacity = 0.4
+    @ViewBuilder
+    private var copiedBadge: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 12.0)) { timeline in
+            let elapsed = max(0, timeline.date.timeIntervalSince(model.stateChangedAt))
+            let phase = (elapsed.truncatingRemainder(dividingBy: 1.5)) / 1.5
+            let opacity = 0.4 + 0.6 * (0.5 + 0.5 * cos(phase * .pi * 2))
+            Text("Copied")
+                .font(.system(size: 10))
+                .foregroundColor(.white.opacity(opacity))
         }
+    }
+}
+
+struct PulseDot: View {
+    let speed: Double
+    let baseOpacity: Double
+    let amplitude: Double
+    let t: TimeInterval
+    let stateT: TimeInterval
+
+    private let entranceDuration: TimeInterval = 0.32
+
+    private var entranceScale: Double {
+        let progress = min(1.0, stateT / entranceDuration)
+        if progress < 0.5 {
+            return 0.6 + 0.8 * (progress / 0.5)
+        }
+        return 1.4 - 0.4 * ((progress - 0.5) / 0.5)
+    }
+
+    var body: some View {
+        let phase = t * .pi * 2 / speed
+        let pulse = baseOpacity + amplitude * (0.5 + 0.5 * sin(phase))
+        let breathScale = 1.0 + 0.08 * sin(phase)
+        let scale = stateT < entranceDuration ? entranceScale : breathScale
+        Circle()
+            .frame(width: 8, height: 8)
+            .scaleEffect(scale)
+            .opacity(pulse)
+    }
+}
+
+struct DoneCheck: View {
+    let t: TimeInterval
+    let stateT: TimeInterval
+
+    private var popProgress: Double { min(1.0, stateT / 0.4) }
+    private var ringProgress: Double { min(1.0, stateT / 0.6) }
+
+    private var checkScale: Double {
+        let p = popProgress
+        if p < 0.45 { return 0.4 + 0.9 * (p / 0.45) }
+        return 1.3 - 0.3 * ((p - 0.45) / 0.55)
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.green.opacity((1 - ringProgress) * 0.55), lineWidth: 1.5)
+                .scaleEffect(1 + ringProgress * 1.6)
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.green)
+                .scaleEffect(popProgress < 1 ? checkScale : 1 + 0.06 * sin(t * 1.4))
+        }
+    }
+}
+
+struct ErrorIndicator: View {
+    let t: TimeInterval
+    let stateT: TimeInterval
+
+    private var wiggleT: Double { min(stateT, 0.9) }
+    private var decay: Double { 1 - wiggleT / 0.9 }
+
+    private var wiggleX: Double { sin(wiggleT * 16) * decay * 1.6 }
+    private var pulseScale: Double {
+        let p = max(0, stateT - 0.9)
+        return 0.88 + 0.12 * sin(p * 2.2)
+    }
+
+    var body: some View {
+        Image(systemName: "exclamationmark.triangle.fill")
+            .font(.system(size: 13))
+            .foregroundStyle(Color.red)
+            .offset(x: CGFloat(wiggleX))
+            .scaleEffect(pulseScale)
     }
 }
 
@@ -166,10 +291,12 @@ final class CaptureBanner: @unchecked Sendable {
     nonisolated(unsafe) private var window: NSWindow?
     nonisolated(unsafe) private var timer: Timer?
     nonisolated(unsafe) private var startedAt: Date?
-    nonisolated(unsafe) private var clickOutsideMonitor: Any?
+    nonisolated(unsafe) private var localClickMonitor: Any?
+    nonisolated(unsafe) private var globalClickMonitor: Any?
     nonisolated(unsafe) private var model: CaptureBannerModel
 
     var onDismiss: (() -> Void)?
+    var onBannerClick: (() -> Void)?
 
     nonisolated init() {
         self.model = CaptureBannerModel()
@@ -301,10 +428,12 @@ final class CaptureBanner: @unchecked Sendable {
         timer = nil
     }
 
-    @MainActor
-    private func toggleExpand() {
-        model.isExpanded.toggle()
-        updateWindowFrame(animated: true)
+    func toggleExpand() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.model.isExpanded.toggle()
+            self.updateWindowFrame(animated: true)
+        }
     }
 
     @MainActor
@@ -333,22 +462,36 @@ final class CaptureBanner: @unchecked Sendable {
 
     private func installClickOutsideMonitor() {
         removeClickOutsideMonitor()
-        clickOutsideMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self, let window = self.window else { return event }
             if event.window !== window {
                 DispatchQueue.main.async { [weak self] in
                     self?.onDismiss?()
                     self?.hide()
                 }
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.onBannerClick?()
+                }
             }
             return event
+        }
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            DispatchQueue.main.async { [weak self] in
+                self?.onDismiss?()
+                self?.hide()
+            }
         }
     }
 
     private func removeClickOutsideMonitor() {
-        if let monitor = clickOutsideMonitor {
+        if let monitor = localClickMonitor {
             NSEvent.removeMonitor(monitor)
-            clickOutsideMonitor = nil
+            localClickMonitor = nil
+        }
+        if let monitor = globalClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalClickMonitor = nil
         }
     }
 }
