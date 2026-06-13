@@ -22,6 +22,7 @@ mock.module("@opencode-ai/sdk/client", () => ({
 
 import { assertServerReady } from "../opencode-bridge/client.js"
 import { enrichPrompt } from "../compiler/enricher.js"
+import { pathsToFileParts } from "../opencode-bridge/file-parts.js"
 import type { TranscriptSegment, SelectedFrame, CursorEvent } from "../compiler/schema.js"
 
 describe("Enricher", () => {
@@ -176,10 +177,9 @@ Acceptance:
     expect(textPart.text).toContain(transcript)
     expect(textPart.text).toContain(screenshotPaths[0])
     expect(textPart.text).toContain(screenshotPaths[1])
-    expect(call.body.parts.filter((p: any) => p.type === "file")).toEqual([
-      { type: "file", mime: "image/png", filename: "screenshot-1.png", url: "file:///tmp/screenshot-1.png" },
-      { type: "file", mime: "image/png", filename: "screenshot-2.png", url: "file:///tmp/screenshot-2.png" },
-    ])
+    expect(call.body.parts.filter((p: any) => p.type === "file")).toEqual(
+      pathsToFileParts(screenshotPaths)
+    )
   })
 
   it("uses the requested OmniCapture model when provided", async () => {

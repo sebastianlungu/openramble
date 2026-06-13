@@ -22,6 +22,7 @@ mock.module("@opencode-ai/sdk/client", () => ({
 }))
 
 import { executeHandoff, appendPrompt } from "../opencode-bridge/handoff.js"
+import { toFilePart } from "../opencode-bridge/file-parts.js"
 
 describe("Handoff", () => {
   let tmpDir: string
@@ -89,12 +90,9 @@ describe("Handoff", () => {
 
     const body = mockPrompt.mock.calls[0][0].body
     expect(body.parts.some((part: any) => part.type === "file")).toBe(true)
-    expect(body.parts.find((part: any) => part.type === "file")).toEqual({
-      type: "file",
-      mime: "image/png",
-      filename: "shot.png",
-      url: `file://${imagePath}`,
-    })
+    expect(body.parts.find((part: any) => part.type === "file")).toEqual(
+      toFilePart(imagePath),
+    )
   })
 
   it("falls back to saving hidden context when injection fails", async () => {

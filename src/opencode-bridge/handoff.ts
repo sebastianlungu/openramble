@@ -1,5 +1,6 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs"
-import { resolve, dirname, basename } from "node:path"
+import { resolve, dirname } from "node:path"
+import { pathsToFileParts, type FilePart } from "./file-parts.js"
 import {
   createClient,
   type ServerConnection,
@@ -83,7 +84,7 @@ async function tryHiddenInjection(
       0
     )
     const supportsImages = await shouldAttachImages(conn, input.draft.hiddenContext)
-    const parts: Array<{ type: "text"; text: string } | { type: "file"; mime: string; filename: string; url: string }> = [
+    const parts: Array<{ type: "text"; text: string } | FilePart> = [
       {
         type: "text",
         text: `[OMNICAPTAIN HIDDEN CONTEXT] ${hiddenText}`,
@@ -138,29 +139,19 @@ function buildHiddenScreenshotParts(hiddenContext: Record<string, unknown>) {
     ? hiddenContext.screenshots
     : []
 
-  return screenshots
-    .map((entry) => {
-      if (typeof entry === "string") return entry
-      if (entry && typeof entry === "object" && "absolute" in entry) {
-        return typeof entry.absolute === "string" ? entry.absolute : null
-      }
-      return null
-    })
-    .filter((path): path is string => typeof path === "string" && path.length > 0)
-    .filter((path) => existsSync(path))
-    .slice(0, 20)
-    .map((path) => ({
-      type: "file" as const,
-      mime: inferImageMime(path),
-      filename: basename(path),
-      url: `file://${path}`,
-    }))
-}
-
-function inferImageMime(path: string): string {
-  const lower = path.toLowerCase()
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg"
-  return "image/png"
+  return pathsToFileParts(
+    screenshots
+      .map((entry) => {
+        if (typeof entry === "string") return entry
+        if (entry && typeof entry === "object" && "absolute" in entry) {
+          return typeof entry.absolute === "string" ? entry.absolute : null
+        }
+        return null
+      })
+      .filter((path): path is string => typeof path === "string" && path.length > 0)
+      .filter((path) => existsSync(path))
+      .slice(0, 20)
+  )
 }
 
 async function tryTuiAppend(

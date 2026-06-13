@@ -3,7 +3,7 @@ import type {
   SelectedFrame,
   CursorEvent,
 } from "./schema.js"
-import { basename } from "node:path"
+import { pathsToFileParts, type FilePart } from "../opencode-bridge/file-parts.js"
 import {
   assertServerReady,
   createClient,
@@ -107,14 +107,14 @@ export async function enrichPrompt(
 
   const sessionId = sessionResult.data.id
 
-  const parts: Array<{ type: "text"; text: string } | { type: "file"; mime: string; filename: string; url: string }> = [
+  const parts: Array<{ type: "text"; text: string } | FilePart> = [
     {
       type: "text",
       text: buildEnrichmentUserText(input),
     },
   ]
 
-  parts.push(...buildScreenshotFileParts(input.screenshotPaths))
+  parts.push(...pathsToFileParts(input.screenshotPaths))
 
   const response = await client.session.prompt({
     path: { id: sessionId },
@@ -268,21 +268,6 @@ function assertLowInformationSections(target: string, implementation: string): v
   if (!guardrailTerms.some((term) => implementationLower.includes(term))) {
     throw new Error("Enrichment failed quality gate: low-information implementation invents specifics")
   }
-}
-
-function buildScreenshotFileParts(screenshotPaths: string[]) {
-  return screenshotPaths.map((path) => ({
-    type: "file" as const,
-    mime: inferImageMime(path),
-    filename: basename(path),
-    url: `file://${path}`,
-  }))
-}
-
-function inferImageMime(path: string): string {
-  const lower = path.toLowerCase()
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg"
-  return "image/png"
 }
 
 function buildEnrichmentUserText(input: EnrichPromptInput): string {
