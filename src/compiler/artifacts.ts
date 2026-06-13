@@ -1,5 +1,5 @@
 import { mkdirSync, copyFileSync, writeFileSync, existsSync, statSync } from "node:fs"
-import { resolve } from "node:path"
+import { resolve, dirname } from "node:path"
 import type { ArtifactManifest, ArtifactManifestEntry, RunRecord, SentToModel, InputPaths } from "./schema.js"
 
 export type ArtifactArgs = {
@@ -31,16 +31,16 @@ export function setupArtifactDirs(runRoot: string): void {
   }
 }
 
-function copyFileIfDifferent(src: string, dest: string): void {
+export function stageFile(src: string, dest: string): void {
   const resolvedSrc = resolve(src)
   const resolvedDest = resolve(dest)
   if (resolvedSrc === resolvedDest) return
-
+  mkdirSync(dirname(resolvedDest), { recursive: true })
   copyFileSync(resolvedSrc, resolvedDest)
 }
 
 export function copyTranscript(src: string, dest: string): void {
-  copyFileIfDifferent(src, dest)
+  stageFile(src, dest)
 }
 
 export function copyScreenshots(
@@ -50,44 +50,10 @@ export function copyScreenshots(
   const results: string[] = []
   for (let i = 0; i < srcPaths.length; i++) {
     const dest = resolve(paths.screenshots[i]?.abs ?? `${paths.transcriptAbs}/../screenshots/${i}.png`)
-    copyFileIfDifferent(srcPaths[i]!, dest)
+    stageFile(srcPaths[i]!, dest)
     results.push(dest)
   }
   return results
-}
-
-export function copyBrowserMetadata(
-  src: string | undefined,
-  paths: InputPaths
-): string | undefined {
-  if (!src || !paths.browser) return undefined
-  const dest = resolve(paths.browser.abs)
-  copyFileIfDifferent(src, dest)
-  return dest
-}
-
-export function copyAudio(
-  src: string | undefined,
-  paths: InputPaths
-): string | undefined {
-  if (!src || !paths.audio) return undefined
-  mkdirSync(resolve(paths.audio.abs).split("/").slice(0, -1).join("/"), {
-    recursive: true,
-  })
-  copyFileIfDifferent(src, paths.audio.abs)
-  return paths.audio.abs
-}
-
-export function copyVideo(
-  src: string | undefined,
-  paths: InputPaths
-): string | undefined {
-  if (!src || !paths.video) return undefined
-  mkdirSync(resolve(paths.video.abs).split("/").slice(0, -1).join("/"), {
-    recursive: true,
-  })
-  copyFileIfDifferent(src, paths.video.abs)
-  return paths.video.abs
 }
 
 export function generateArtifactManifest(
@@ -278,7 +244,13 @@ export function stageAllArtifacts(args: ArtifactArgs): void {
   setupArtifactDirs(args.runRoot)
   copyTranscript(args.transcriptPath, args.paths.transcriptAbs)
   copyScreenshots(args.screenshotPaths, args.paths)
-  copyBrowserMetadata(args.browserMetadataPath, args.paths)
-  copyAudio(args.audioPath, args.paths)
-  copyVideo(args.videoPath, args.paths)
+  if (args.browserMetadataPath && args.paths.browser) {
+    stageFile(args.browserMetadataPath, args.paths.browser.abs)
+  }
+  if (args.audioPath && args.paths.audio) {
+    stageFile(args.audioPath, args.paths.audio.abs)
+  }
+  if (args.videoPath && args.paths.video) {
+    stageFile(args.videoPath, args.paths.video.abs)
+  }
 }
