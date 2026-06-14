@@ -1,8 +1,8 @@
-import ScreenCaptureKit
-import AVFoundation
+@preconcurrency import ScreenCaptureKit
+@preconcurrency import AVFoundation
 import AppKit
 
-final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput {
+final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
 
     private var stream: SCStream?
     private var assetWriter: AVAssetWriter?
@@ -12,6 +12,7 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     private var recordingURL: URL?
 
     private let bufferQueue = DispatchQueue(label: "ai.openvysta.buffer")
+    private let videoWriterQueue = DispatchQueue(label: "ai.openvysta.video-writer")
     private var frameBuffer: [CapturedFrame] = []
     private let maxBufferSize = 1800
     private var runningFrameIndex = 0
@@ -174,17 +175,21 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             addFrame(captured)
 
             let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-            if assetWriter?.status == .writing, assetWriterInput?.isReadyForMoreMediaData == true {
-                if let status = assetWriter?.status,
-                   Self.shouldStartWriterSession(
-                       writerStatus: status,
-                       inputReady: true,
-                       sessionStarted: assetWriterSessionStarted
-                   ) {
-                    assetWriter?.startSession(atSourceTime: timestamp)
-                    assetWriterSessionStarted = true
+            let ref = RetainedPixelBuffer(imageBuffer)
+            videoWriterQueue.async { [ref] in
+                let imageBuffer = ref.consume()
+                if self.assetWriter?.status == .writing, self.assetWriterInput?.isReadyForMoreMediaData == true {
+                    if let status = self.assetWriter?.status,
+                       Self.shouldStartWriterSession(
+                           writerStatus: status,
+                           inputReady: true,
+                           sessionStarted: self.assetWriterSessionStarted
+                       ) {
+                        self.assetWriter?.startSession(atSourceTime: timestamp)
+                        self.assetWriterSessionStarted = true
+                    }
+                    self.assetWriterAdaptor?.append(imageBuffer, withPresentationTime: timestamp)
                 }
-                assetWriterAdaptor?.append(imageBuffer, withPresentationTime: timestamp)
             }
         }
     }
@@ -195,6 +200,23 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             createIfNecessary: false
         ) as? [[SCStreamFrameInfo: Any]] else { return nil }
         return attachments.first?[.status] as? Int
+    }
+
+    final class RetainedPixelBuffer: @unchecked Sendable {
+        private let opaque: UnsafeMutableRawPointer
+        private var consumed = false
+        init(_ buffer: CVImageBuffer) {
+            self.opaque = Unmanaged<CVImageBuffer>.passRetained(buffer).toOpaque()
+        }
+        func consume() -> CVImageBuffer {
+            consumed = true
+            return Unmanaged<CVImageBuffer>.fromOpaque(opaque).takeRetainedValue()
+        }
+        deinit {
+            if !consumed {
+                Unmanaged<CVImageBuffer>.fromOpaque(opaque).release()
+            }
+        }
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
