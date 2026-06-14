@@ -197,15 +197,15 @@ final class CaptureEngine: @unchecked Sendable {
         }
 
         let resolvedTranscriptPath = transcriptPath ?? store.runDir.appendingPathComponent("transcript.md").path
+        let segmentsText = transcriptSegments.map {
+            "[\($0.startMs)-\($0.endMs)ms] \($0.text)"
+        }.joined(separator: "\n\n")
         if let path = transcriptPath,
            let text = try? String(contentsOfFile: path, encoding: .utf8),
            !text.isEmpty {
             _ = try? store.saveTranscript(text)
         } else {
-            let fallbackText = transcriptSegments.map {
-                "[\($0.startMs)-\($0.endMs)ms] \($0.text)"
-            }.joined(separator: "\n\n")
-            _ = try? store.saveTranscript(fallbackText)
+            _ = try? store.saveTranscript(segmentsText)
         }
 
         _ = try? store.saveCursorTimeline(cursorEvents)
@@ -287,11 +287,15 @@ final class CaptureEngine: @unchecked Sendable {
         )
 
         await MainActor.run {
-            self.showCompletion(compiled: output)
+            self.showCompletion(compiled: output, transcriptText: segmentsText, runDir: store.runDir)
         }
     }
 
-    private func showCompletion(compiled: CompilerOutput?) {
+    private func showCompletion(
+        compiled: CompilerOutput?,
+        transcriptText: String?,
+        runDir: URL?
+    ) {
         state = .complete
         onStateChange?(.complete)
 
@@ -305,10 +309,119 @@ final class CaptureEngine: @unchecked Sendable {
                 title: prompt.title
             )
             try? SessionStore.saveToHistory(entry)
-        } else if let errors = compiled?.errors, !errors.isEmpty {
-            captureBanner.showError(errors.joined(separator: "\n"))
         } else {
-            captureBanner.showDone(promptText: "Prompt compiled. Ready to paste.")
+            let result = Self.saveFailedHistoryEntry(
+                compiled: compiled,
+                transcriptText: transcriptText,
+                runDir: runDir
+            )
+            let bannerCopy = result.entrySaved
+                ? "Failed — saved to History"
+                : "Failed — could not save to History"
+            captureBanner.showError(bannerCopy)
+        }
+    }
+
+    // MARK: - Failed history entry helpers
+
+    /// First non-empty line of the captured transcript, truncated to 60
+    /// characters with a single-character ellipsis. Falls back to
+    /// `"Failed capture"` when the transcript is nil or blank. Pure:
+    /// no state, no I/O.
+    static func failedEntryTitle(transcriptText: String?) -> String {
+        let first = (transcriptText ?? "")
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first(where: { !$0.isEmpty })
+        guard let line = first else { return "Failed capture" }
+        if line.count > 60 {
+            return String(line.prefix(59)) + "\u{2026}"
+        }
+        return line
+    }
+
+    /// Build, log, and persist a failed `PromptHistoryEntry` for any
+    /// compiler-stage outcome (explicit errors, no draft, warnings only,
+    /// or `compiled == nil`). Returns the persisted entry plus whether
+    /// the raw error log was written, where it was written, and whether
+    /// the history entry itself was appended to `~/.omnicaptain/history.json`.
+    /// Tests can assert the data shape without depending on the global
+    /// history file.
+    @discardableResult
+    internal static func saveFailedHistoryEntry(
+        compiled: CompilerOutput?,
+        transcriptText: String?,
+        runDir: URL?
+    ) -> (entry: PromptHistoryEntry, logWritten: Bool, logPath: String?, entrySaved: Bool) {
+        let title = failedEntryTitle(transcriptText: transcriptText)
+        let errors = compiled?.errors ?? []
+        let warnings = compiled?.warnings ?? []
+        let reason = Self.failureReason(errors: errors, warnings: warnings)
+        let (logWritten, errorLogPath) = Self.persistFailureLog(
+            errors: errors, warnings: warnings, runDir: runDir
+        )
+        let entry = PromptHistoryEntry(
+            promptText: "",
+            title: title,
+            status: .failed,
+            failure: PromptHistoryFailure(
+                reason: reason,
+                runDir: runDir?.path,
+                errorLogPath: errorLogPath
+            )
+        )
+        let entrySaved = Self.appendToHistory(entry)
+        return (entry, logWritten, errorLogPath, entrySaved)
+    }
+
+    private static func failureReason(errors: [String], warnings: [String]) -> String {
+        let firstRealError = errors.first(where: {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        })
+        if let e = firstRealError {
+            return e.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        var reason = "Compiler produced no prompt"
+        let realWarnings = warnings
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if !realWarnings.isEmpty {
+            reason += "\n" + realWarnings.joined(separator: "\n")
+        }
+        return reason
+    }
+
+    private static func persistFailureLog(
+        errors: [String],
+        warnings: [String],
+        runDir: URL?
+    ) -> (Bool, String?) {
+        guard let runDir else { return (false, nil) }
+        let rawLog: String
+        if !errors.isEmpty {
+            rawLog = errors.joined(separator: "\n")
+        } else if !warnings.isEmpty {
+            rawLog = warnings.joined(separator: "\n")
+        } else {
+            rawLog = "Compiler returned no prompt and no errors."
+        }
+        do {
+            let logURL = try SessionStore.saveFailureLog(rawLog, to: runDir)
+            return (true, logURL.path)
+        } catch {
+            NSLog("[OmniCapture] failed to persist compiler-error.log at \(runDir.path): \(error.localizedDescription)")
+            return (false, nil)
+        }
+    }
+
+    @discardableResult
+    private static func appendToHistory(_ entry: PromptHistoryEntry) -> Bool {
+        do {
+            try SessionStore.saveToHistory(entry)
+            return true
+        } catch {
+            NSLog("[OmniCapture] failed to save failed history entry: \(error.localizedDescription)")
+            return false
         }
     }
 

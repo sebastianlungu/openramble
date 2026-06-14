@@ -152,4 +152,14 @@ final class SessionStore {
         decoder.dateDecodingStrategy = .iso8601
         return (try? decoder.decode([PromptHistoryEntry].self, from: data)) ?? []
     }
+
+    static func saveFailureLog(_ rawLog: String, to runDir: URL) throws -> URL {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: runDir.path) {
+            try fm.createDirectory(at: runDir, withIntermediateDirectories: true)
+        }
+        let logURL = runDir.appendingPathComponent("compiler-error.log")
+        try rawLog.write(to: logURL, atomically: true, encoding: .utf8)
+        return logURL
+    }
 }

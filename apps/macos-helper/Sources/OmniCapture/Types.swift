@@ -143,17 +143,63 @@ enum CaptureBannerState: Sendable {
     case error(String)
 }
 
+enum PromptHistoryStatus: String, Codable, Sendable {
+    case success
+    case failed
+}
+
+struct PromptHistoryFailure: Codable, Sendable, Equatable {
+    let reason: String
+    let runDir: String?
+    let errorLogPath: String?
+}
+
 struct PromptHistoryEntry: Codable, Identifiable, Sendable {
     let id: UUID
     let timestamp: Date
     let promptText: String
     let title: String
+    var status: PromptHistoryStatus = .success
+    var failure: PromptHistoryFailure? = nil
 
     init(id: UUID = UUID(), timestamp: Date = Date(), promptText: String, title: String) {
         self.id = id
         self.timestamp = timestamp
         self.promptText = promptText
         self.title = title
+    }
+
+    init(id: UUID = UUID(),
+         timestamp: Date = Date(),
+         promptText: String,
+         title: String,
+         status: PromptHistoryStatus = .success,
+         failure: PromptHistoryFailure? = nil) {
+        self.id = id
+        self.timestamp = timestamp
+        self.promptText = promptText
+        self.title = title
+        self.status = status
+        self.failure = failure
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case timestamp
+        case promptText
+        case title
+        case status
+        case failure
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.promptText = try container.decode(String.self, forKey: .promptText)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.status = try container.decodeIfPresent(PromptHistoryStatus.self, forKey: .status) ?? .success
+        self.failure = try container.decodeIfPresent(PromptHistoryFailure.self, forKey: .failure)
     }
 }
 
