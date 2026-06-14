@@ -38,7 +38,7 @@ final class CaptureEngine: @unchecked Sendable {
     }
 
     private var audioCapture: AudioCapture?
-    nonisolated(unsafe) private let screenCapture = ScreenCapture()
+    private let screenCapture = ScreenCapture()
     private let cursorTracker = CursorTracker()
     private let frameExtractor = FrameExtractor()
     private let captureBanner = CaptureBanner()
@@ -52,6 +52,8 @@ final class CaptureEngine: @unchecked Sendable {
     var onError: ((Error) -> Void)?
 
     var currentState: CaptureState { state }
+
+    var screenCaptureForTesting: ScreenCapture { screenCapture }
 
     init(
         compilerBridge: CompilerBridgeProtocol? = nil,
@@ -134,6 +136,9 @@ final class CaptureEngine: @unchecked Sendable {
 
                 try audioCapture?.startRecording(startDate: captureStartDate)
                 try await screenCapture.startCapture(startDate: captureStartDate, runDirectory: self.sessionStore?.runDir)
+                screenCapture.onError = { [weak self] error in
+                    self?.onError?(error)
+                }
 
             } catch {
                 await rollbackFailedCaptureStart()
