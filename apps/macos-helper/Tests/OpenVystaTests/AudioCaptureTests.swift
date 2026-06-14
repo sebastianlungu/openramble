@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import AVFoundation
 @testable import OpenVysta
 
 struct AudioCaptureTests {
@@ -67,5 +68,28 @@ struct AudioCaptureTests {
         #expect(segments[1].text == "Second instruction")
         #expect(segments[1].startMs == 2400)
         #expect(segments[1].endMs == 4000)
+    }
+
+    @Test func testStopRecordingClosesAVAudioFile() async throws {
+        let fileManager = FileManager.default
+        let tempRunDir = fileManager.temporaryDirectory
+            .appendingPathComponent("vysta-audio-test-\(UUID().uuidString)")
+        defer { try? fileManager.removeItem(at: tempRunDir) }
+
+        let capture = AudioCapture(runDir: tempRunDir)
+
+        let audioURL = tempRunDir.appendingPathComponent("inputs/audio/original.m4a")
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: 44100.0,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        let seeded = try AVAudioFile(forWriting: audioURL, settings: settings)
+        capture.setAudioFileForTesting(seeded)
+        #expect(capture.audioFileForTesting != nil)
+
+        _ = capture.stopRecording()
+        #expect(capture.audioFileForTesting == nil)
     }
 }

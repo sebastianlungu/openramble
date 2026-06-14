@@ -238,6 +238,36 @@ struct CaptureEngineTests {
 
         #expect(result.entry.failure?.reason == "Compiler produced no prompt\nVisible prompt was empty")
     }
+
+    @Test func testScreenCaptureErrorWiredToEngineOnError() async throws {
+        let engine = CaptureEngine()
+        var capturedEngineError: Error?
+        engine.onError = { error in
+            capturedEngineError = error
+        }
+
+        engine.start()
+        engine.triggerToggle()
+
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while engine.screenCaptureForTesting.onError == nil,
+              ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+
+        let productionWiring = engine.screenCaptureForTesting.onError
+        #expect(productionWiring != nil)
+
+        let expected = NSError(domain: "ai.openvysta.test", code: 99)
+        productionWiring?(expected)
+
+        #expect(capturedEngineError?.asNSError == expected)
+        engine.stop()
+    }
+}
+
+private extension Error {
+    var asNSError: NSError { self as NSError }
 }
 
 /// Backs up and restores the global `~/.openvysta/history.json` for the

@@ -38,4 +38,27 @@ struct ScreenCaptureTests {
         let recordingURL = ScreenCapture.recordingURL(for: runDir)
         #expect(recordingURL.path == "/tmp/vysta-test-run/capture-original.mov")
     }
+
+    @Test func testOnErrorPropagatesFromStreamDelegate() {
+        let capture = ScreenCapture()
+        var captured: Error?
+        capture.onError = { error in
+            captured = error
+        }
+
+        let expected = NSError(domain: "ai.openvysta.test", code: 42)
+        let dummyStream = Self.makeDummySCStream()
+        capture.stream(dummyStream, didStopWithError: expected)
+
+        #expect(captured?.asNSError == expected)
+    }
+
+    private static func makeDummySCStream() -> SCStream {
+        let placeholder = NSObject()
+        return unsafeBitCast(placeholder, to: SCStream.self)
+    }
+}
+
+private extension Error {
+    var asNSError: NSError { self as NSError }
 }
