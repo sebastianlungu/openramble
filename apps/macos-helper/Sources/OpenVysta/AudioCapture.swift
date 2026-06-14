@@ -20,6 +20,12 @@ final class AudioCapture: NSObject, SFSpeechRecognizerDelegate {
     var onInterimText: ((String) -> Void)?
     var onError: ((Error) -> Void)?
 
+    var audioFileForTesting: AVAudioFile? { audioFile }
+
+    func setAudioFileForTesting(_ file: AVAudioFile?) {
+        audioFile = file
+    }
+
     init(runDir: URL? = nil) {
         super.init()
         if let runDir = runDir {
@@ -148,6 +154,11 @@ final class AudioCapture: NSObject, SFSpeechRecognizerDelegate {
 
         recognitionTask = nil
         recognitionRequest = nil
+
+        if #available(macOS 15.0, *) {
+            audioFile?.close()
+        }
+        self.audioFile = nil
 
         do {
             let audioDir = recordingURL.deletingLastPathComponent()
