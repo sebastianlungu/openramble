@@ -9,7 +9,7 @@ describe("Validation", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `omni-validate-test-${Date.now()}`)
+    tmpDir = join(tmpdir(), `vysta-validate-test-${Date.now()}`)
     mkdirSync(tmpDir, { recursive: true })
     mkdirSync(join(tmpDir, "inputs", "screenshots"), { recursive: true })
   })

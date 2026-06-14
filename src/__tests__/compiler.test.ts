@@ -5,7 +5,7 @@ import { scanText } from "../compiler/redact.js"
 describe("Compiler", () => {
   const transcript = "Change the login button to blue. Add more padding."
   const screenshotPaths = ["/tmp/s1.png", "/tmp/s2.png"]
-  const runRoot = "/tmp/omni-test"
+  const runRoot = "/tmp/vysta-test"
 
   it("builds input paths correctly", () => {
     const paths = buildInputPaths({

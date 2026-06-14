@@ -1,10 +1,10 @@
 ---
 name: sign
-description: Build and sign OmniCapture.app with stable identity. Use when user says '/sign', 'rebuild app', 'sign the app', 'build and sign', or after making changes to the macOS helper code.
+description: Build and sign OpenVysta.app with stable identity. Use when user says '/sign', 'rebuild app', 'sign the app', 'build and sign', or after making changes to the macOS helper code.
 user-invocable: true
 ---
 
-# Sign OmniCapture
+# Sign OpenVysta
 
 Builds the macOS helper in release mode, installs to /Applications, bootstraps the stable `OmniCapture Dev` identity if missing, and resets stale Screen Recording TCC when the signing identity changed.
 
@@ -19,7 +19,7 @@ Builds the macOS helper in release mode, installs to /Applications, bootstraps t
 1. Runs `apps/macos-helper/install.sh`
 2. Bootstraps `OmniCapture Dev` in the login keychain if missing
 3. Resets stale `ScreenCapture` TCC if the previously installed app used a different identity
-4. Installs and signs the app at `/Applications/OmniCapture.app`
+4. Installs and signs the app at `/Applications/OpenVysta.app`
 5. Verifies signature
 
 ## Implementation
@@ -33,7 +33,7 @@ bash "apps/macos-helper/install.sh"
 Then report:
 - Build success/failure
 - Signature verification result
-- Remind user: `open -a OmniCapture`
+- Remind user: `open -a OpenVysta`
 
 ## Notes
 

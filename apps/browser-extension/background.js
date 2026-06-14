@@ -49,7 +49,7 @@ function captureBrowserContext(maxNodes) {
     height: window.innerHeight,
   }
 
-  const cursorEl = window.__omniCursorElement__
+  const cursorEl = window.__vystaCursorElement__
   if (cursorEl) {
     ctx.elementUnderCursor = elementToContext(cursorEl)
   }
@@ -73,8 +73,8 @@ function captureBrowserContext(maxNodes) {
   }
   ctx.accessibilitySnapshot = ariaLines.join('\n')
 
-  ctx.consoleMessages = (window.__omniConsoleLogs__ || []).slice(-20)
-  ctx.pageErrors = (window.__omniPageErrors__ || []).slice(-10)
+  ctx.consoleMessages = (window.__vystaConsoleLogs__ || []).slice(-20)
+  ctx.pageErrors = (window.__vystaPageErrors__ || []).slice(-10)
 
   const networkFailures = []
   try {

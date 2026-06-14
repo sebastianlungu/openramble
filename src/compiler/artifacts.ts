@@ -109,7 +109,7 @@ export function generateArtifactManifest(
 
 export function writeManifestMarkdown(manifest: ArtifactManifest): void {
   const lines = [
-    `# OmniCapture Run: ${manifest.runId}`,
+    `# OpenVysta Run: ${manifest.runId}`,
     `Created: ${manifest.createdAt}`,
     `Root: ${manifest.rootPath}`,
     "",

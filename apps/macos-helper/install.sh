@@ -3,10 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-APP="/Applications/OmniCapture.app"
-BINARY="$SCRIPT_DIR/.build/release/omnicapture"
+APP="/Applications/OpenVysta.app"
+BINARY="$SCRIPT_DIR/.build/release/openvysta"
 SIGN_IDENTITY="${SIGN_IDENTITY:-OmniCapture Dev}"
-BUNDLE_ID="ai.omnicaptain.macos-helper"
+BUNDLE_ID="ai.openvysta.macos-helper"
 LOGIN_KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 SIGNING_DIR="/tmp/oc"
 SIGNING_CERT="$SIGNING_DIR/cert.pem"
@@ -94,18 +94,18 @@ if [ ! -x "$BINARY" ]; then
   exit 1
 fi
 
-echo "Killing running OmniCapture..."
-pkill -f "OmniCapture.app" 2>/dev/null || true
+echo "Killing running OpenVysta..."
+pkill -f "OpenVysta.app" 2>/dev/null || true
 sleep 1
 
 reset_screen_recording_if_identity_changed
 
 echo "Installing binary..."
-cp "$BINARY" "$APP/Contents/MacOS/omnicapture"
+cp "$BINARY" "$APP/Contents/MacOS/openvysta"
 
 echo "Stamping repo root: $REPO_ROOT"
-/usr/libexec/PlistBuddy -c "Set :OmniCaptureRepoRoot $REPO_ROOT" "$APP/Contents/Info.plist" 2>/dev/null || \
-  /usr/libexec/PlistBuddy -c "Add :OmniCaptureRepoRoot string $REPO_ROOT" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :OpenVystaRepoRoot $REPO_ROOT" "$APP/Contents/Info.plist" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :OpenVystaRepoRoot string $REPO_ROOT" "$APP/Contents/Info.plist"
 
 echo "Signing with stable identity: $SIGN_IDENTITY..."
 codesign --force --sign "$SIGN_IDENTITY" \
@@ -117,6 +117,6 @@ echo "Verifying signature..."
 codesign --verify --verbose "$APP" && echo "Signature valid."
 
 echo ""
-echo "Done. Run: open -a OmniCapture"
+echo "Done. Run: open -a OpenVysta"
 echo ""
 echo "TCC permissions persist across rebuilds with this signing identity, and Screen Recording is reset automatically if the signing identity changed."

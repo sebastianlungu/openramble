@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
 
 import {
-  DEFAULT_OMNICAPTURE_MODEL,
+  DEFAULT_VYSTA_MODEL,
   discoverServerUrl,
   discoverSessionId,
   createClient,
@@ -73,11 +73,11 @@ function isValidCursorEvents(data: unknown): data is CursorEvent[] {
 function resolveRunDestination(outPath: string): { runId: string; runRoot: string } {
   const outDir = resolve(outPath)
   const leaf = basename(outDir)
-  if (/^omni_(\d{13}|\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)$/.test(leaf)) {
+  if (/^vysta_(\d{13}|\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)$/.test(leaf)) {
     return { runId: leaf, runRoot: outDir }
   }
 
-  const runId = `omni_${Date.now()}`
+  const runId = `vysta_${Date.now()}`
   return { runId, runRoot: resolve(outDir, runId) }
 }
 
@@ -96,7 +96,7 @@ async function resolveSessionId(
 }
 
 function printHelp(): void {
-  console.log(`OmniCaptain v0.1.0`)
+  console.log(`OpenVysta v0.1.0`)
   console.log(`Server URL: ${discoverServerUrl()}`)
   console.log()
   console.log("Usage: bun run src/index.ts compile [options]")
@@ -111,7 +111,7 @@ function printHelp(): void {
   console.log("  --model <model>           Default: OpenCode configured model")
   console.log("  --opencode-server <url>   Default: http://localhost:4096")
   console.log("  --session-id <id>         Default: from OPENCODE_SESSION_ID env")
-  console.log("  --out <path>              Default: ./.omnicaptain/runs")
+  console.log("  --out <path>              Default: ./.openvysta/runs")
   console.log("  --enrich false            Skip AI visual compilation; artifacts only")
   console.log("  --no-preview              Compile artifacts without interactive preview")
   console.log("  --auto-send               Auto-send without preview (optional)")
@@ -249,10 +249,10 @@ async function runCompile(args: ParsedArgs): Promise<void> {
   const opencodeServerUrl = (args["opencode-server"] as string) ?? discoverServerUrl()
   const sessionIdEnv = process.env.OPENCODE_SESSION_ID
   const sessionId = (args["session-id"] as string) ?? sessionIdEnv
-  const model = (args.model as string) ?? DEFAULT_OMNICAPTURE_MODEL
+  const model = (args.model as string) ?? DEFAULT_VYSTA_MODEL
 
   const { runId, runRoot } = resolveRunDestination(
-    (args.out as string) ?? "./.omnicaptain/runs"
+    (args.out as string) ?? "./.openvysta/runs"
   )
 
   const transcript = readFileSync(resolve(transcriptPath), "utf-8")

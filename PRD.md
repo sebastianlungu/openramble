@@ -1,18 +1,18 @@
-# OmniCaptain PRD
+# OpenVysta PRD
 
 Date: 2026-06-07
 Status: Draft v0.1
 Owner: Sebastian Lungu
-Product action name: Omnicapture
+Product action name: OpenVysta
 Primary integration: OpenCode
 
 ## 1. Product Thesis
 
-OmniCaptain is a zero-friction multimodal intent compiler for coding agents.
+OpenVysta is a zero-friction multimodal intent compiler for coding agents.
 
 The final product lets the user hold a mouse chord, speak naturally while pointing at anything on screen, release, and receive a high-quality implementation prompt docked over the editor. In the native capture phase, speech is transcribed during capture and aligned with screenshots, cursor/pointing context, and optional browser/code metadata. The build-complete MVP consumes a provided transcript instead of performing STT.
 
-OmniCaptain is not primarily a screen recorder, bug reporter, browser automation tool, dictation app, or DOM operator. It captures human spoken and visual intent and converts it into coding-agent-ready instructions.
+OpenVysta is not primarily a screen recorder, bug reporter, browser automation tool, dictation app, or DOM operator. It captures human spoken and visual intent and converts it into coding-agent-ready instructions.
 
 ## 2. Core Problem
 
@@ -49,7 +49,7 @@ Stop writing prompts manually. Capture what you mean.
 Secondary promise:
 
 ```text
-When richer context exists, OmniCaptain adds it quietly: DOM, route, console, network, accessibility tree, codebase scout hypotheses.
+When richer context exists, OpenVysta adds it quietly: DOM, route, console, network, accessibility tree, codebase scout hypotheses.
 ```
 
 ## 6. Non-Goals
@@ -76,7 +76,7 @@ Launch will not claim exact file/component certainty unless evidence supports it
 | Agent integration | OpenCode-first | OpenCode has SDK/server/TUI APIs for prompt append, hidden session context, session messages, and file search. |
 | Handoff style | Visible prompt plus hidden context | User sees the clean brief. OpenCode receives extra context without cluttering the prompt card. |
 | Capture model | Local video buffer plus selected frames | Dense frame upload is noisy and expensive. Semantic keyframes give better signal. |
-| Speech model | Live transcription plus saved audio artifact | Speech is core to Omnicapture. The transcript must be available while recording and replayable after capture. |
+| Speech model | Live transcription plus saved audio artifact | Speech is core to OpenVysta. The transcript must be available while recording and replayable after capture. |
 | Browser strategy | Universal capture, opportunistic DOM | Product works anywhere from pixels and speech, but browser contexts get route, DOM, console, network, and accessibility enrichment. |
 | Code scouting | Optional read-only hypotheses | Scouting improves file guesses, but must stay confidence-tagged and non-authoritative. |
 | Correction model | Recapture quickly | Faster and cleaner than complex editing UX in v1. |
@@ -128,10 +128,13 @@ Naming rules:
 
 | Surface | Name |
 | --- | --- |
-| Repository/project | `omnicaptain` |
-| CLI command | `omnicaptain` |
-| Product/action noun | `Omnicapture` |
-| Run artifact prefix | `omni_<timestamp>` |
+| Repository/project | `openvysta` |
+| CLI command | `openvysta` |
+| Product name | `OpenVysta` |
+| Action noun / product verb | `openvysta` (capture) |
+| Run artifact prefix | `vysta_<timestamp>` |
+| macOS helper product name | `OpenVysta` |
+| Browser extension | `OpenVysta Browser Context` |
 
 ## 8. OpenCode Handoff Strategy
 
@@ -146,19 +149,19 @@ Relevant capabilities from OpenCode docs:
 | `client.session.prompt` with `noReply: true` | Inject hidden context into the session without triggering an assistant response. |
 | `client.session.prompt` | Send direct prompt messages when running headless. |
 | `client.find.text`, `client.find.files`, `client.find.symbols` | Support optional read-only scout passes. |
-| OpenCode server `/tui/*` endpoints | Drive the TUI programmatically from the local OmniCaptain helper. |
+| OpenCode server `/tui/*` endpoints | Drive the TUI programmatically from the local OpenVysta helper. |
 
 Recommended handoff flow:
 
 ```text
-Omnicapture ends
+OpenVysta capture ends
 -> context compiler builds hidden context packet
 -> optional scout produces file/component hypotheses
 -> OpenCode session receives hidden context with noReply
 -> prompt card displays visible implementation brief
 -> user chooses Send
--> OmniCaptain appends visible prompt to OpenCode TUI
--> OmniCaptain waits for user confirmation by default
+-> OpenVysta appends visible prompt to OpenCode TUI
+-> OpenVysta waits for user confirmation by default
 ```
 
 Handoff fallbacks:
@@ -187,7 +190,7 @@ Never silently drop context. Either inject it, show it, copy it, or save it.
 
 ## 8.1 Speech-to-Text Strategy
 
-Speech is a first-class Omnicapture input. The product is not complete without a reliable path from spoken intent to timestamped transcript.
+Speech is a first-class OpenVysta input. The product is not complete without a reliable path from spoken intent to timestamped transcript.
 
 Recommended STT stack:
 
@@ -261,7 +264,7 @@ No Whisper, local third-party STT, or cloud STT is in scope for now.
 
 ### 9.1 Invocation
 
-The user invokes Omnicapture with a mouse button chord.
+The user invokes OpenVysta with a mouse button chord.
 
 Recommended first implementation:
 
@@ -277,7 +280,7 @@ Global keyboard shortcut for users without extra mouse buttons
 
 ### 9.2 During Capture
 
-During capture, OmniCaptain should show target emphasis only.
+During capture, OpenVysta should show target emphasis only.
 
 Target emphasis means the overlay subtly reinforces the cursor path, hover pauses, and likely referenced regions. It should not show a full transcript by default.
 
@@ -285,7 +288,7 @@ Target emphasis means the overlay subtly reinforces the cursor path, hover pause
 
 On release, the system plays an auditory clickback.
 
-The clickback confirms that OmniCaptain caught the moment. This is mandatory because the full prompt may take seconds or longer to compile.
+The clickback confirms that OpenVysta caught the moment. This is mandatory because the full prompt may take seconds or longer to compile.
 
 ### 9.4 Prompt Card
 
@@ -303,7 +306,7 @@ The card should not expose model stages by default.
 
 ### 10.1 What Gets Captured Locally
 
-OmniCaptain locally captures:
+OpenVysta locally captures:
 
 | Signal | Purpose |
 | --- | --- |
@@ -346,7 +349,7 @@ Local video lets the compiler re-extract frames if the first selection is weak. 
 
 ## 11. Browser Enrichment Layer
 
-OmniCaptain works everywhere, but it should become dramatically more precise in browser contexts.
+OpenVysta works everywhere, but it should become dramatically more precise in browser contexts.
 
 Browser enrichment should collect:
 
@@ -476,7 +479,7 @@ Contents:
 
 ```json
 {
-  "captureId": "omni_2026_06_07_001",
+  "captureId": "vysta_2026_06_07_001",
   "transcript": [],
   "selectedFrames": [],
   "cursorTimeline": [],
@@ -531,7 +534,7 @@ Prompt Card UI
 Recommended repo shape:
 
 ```text
-omnicaptain/
+openvysta/
   apps/
     macos-helper/
     browser-extension/
@@ -551,7 +554,7 @@ omnicaptain/
 If keeping the repository simpler for v1, start with:
 
 ```text
-omnicaptain/
+openvysta/
   src/
     capture/
     compiler/
@@ -578,7 +581,7 @@ omnicaptain/
 ## 17. Data Model
 
 ```ts
-type OmniCaptureSession = {
+type OpenVystaSession = {
   id: string
   createdAt: string
   repoPath?: string
@@ -648,12 +651,12 @@ type PromptDraft = {
 
 ## 18. Privacy and Security Requirements
 
-OmniCaptain captures sensitive surfaces by design. Privacy cannot be an afterthought.
+OpenVysta captures sensitive surfaces by design. Privacy cannot be an afterthought.
 
 Default privacy posture:
 
 ```text
-Nothing is captured unless the user intentionally invokes Omnicapture.
+Nothing is captured unless the user intentionally invokes OpenVysta.
 Raw video stays local by default.
 Only selected frames, transcript, and explicitly needed metadata are sent to cloud models.
 ```
@@ -716,8 +719,7 @@ Expected MVP repository shape:
 src/compiler/                Transcript/screenshots/metadata -> prompt draft
 src/opencode-bridge/         OpenCode SDK client and fallbacks
 src/preview/                 CLI preview actions
-scripts/                     Runnable compile/send/eval scripts
-evals/                       Golden tasks, inputs, outputs, scorecards
+scripts/                     Runnable compile/send scripts
 docs/                        PRD, research, handoff notes
 ```
 
@@ -730,7 +732,7 @@ Do not create a monorepo unless the repository already has workspace structure o
 Default CLI shape:
 
 ```bash
-omnicaptain compile \
+openvysta compile \
   --transcript ./input.md \
   --audio ./capture.m4a \
   --screenshots ./shots/1.png ./shots/2.png \
@@ -738,7 +740,7 @@ omnicaptain compile \
   --model current-opencode \
   --opencode-server http://localhost:4096 \
   --session-id <session-id> \
-  --out ./.omnicaptain/runs
+  --out ./.openvysta/runs
 ```
 
 Required run artifacts:
@@ -769,7 +771,7 @@ Artifact manifest requirements:
 
 | Field | Requirement |
 | --- | --- |
-| Run ID | Stable ID, prefixed with `omni_`. |
+| Run ID | Stable ID, prefixed with `vysta_`. |
 | Root path | Absolute run folder path. |
 | Transcript | Relative and absolute path. |
 | Screenshots | Original filename, copied path, MIME type, dimensions if known. |
@@ -802,7 +804,7 @@ Accepted input contract:
 | Model | Defaults to the current OpenCode-configured model. User may choose another OpenCode-available model. |
 | OpenCode server | CLI flag first, then `OPENCODE_SERVER_URL`, then `http://localhost:4096`. |
 | Session ID | CLI flag first, then `OPENCODE_SESSION_ID`, then interactive/error state. Never hardcode. |
-| Output path | Defaults to `./.omnicaptain/runs/<timestamp>/`. |
+| Output path | Defaults to `./.openvysta/runs/<timestamp>/`. |
 
 Optional browser metadata behavior:
 
@@ -844,17 +846,6 @@ Phase 0 must document the exact model invocation path:
 - What fallback path was used if any step failed.
 ```
 
-Eval scorecard schema:
-
-```text
-manual_time_seconds:
-omnicapture_time_seconds:
-manual_prompt_quality_1_to_5:
-omnicapture_prompt_quality_1_to_5:
-winner: manual | omnicapture | tie
-notes:
-```
-
 MVP implementation rules:
 
 1. Prefer CLI plus local preview over app-shell polish.
@@ -863,13 +854,13 @@ MVP implementation rules:
 4. Use the user's OpenCode-configured model first, but always display what was sent.
 5. Implement fallback paths before happy-path UI polish.
 6. Treat browser metadata as optional pasted JSON, not an extension dependency.
-7. Treat code scout as optional unless it can be added read-only without delaying evals.
+7. Treat code scout as optional unless it can be added read-only without delaying the validation gate.
 8. Use Bun for scripts, tests, and TypeScript execution unless the user changes this later.
 
 Validation gate before Phase 2:
 
 ```text
-Given transcript + screenshots + optional browser metadata, OmniCaptain must produce prompts that are materially better than manual prompting on real UI tasks.
+Given transcript + screenshots + optional browser metadata, OpenVysta must produce prompts that are materially better than manual prompting on real UI tasks.
 ```
 
 ### Phase 0: Spike
@@ -949,8 +940,8 @@ Required eval before continuing:
 
 ```text
 Run 10 real UI change captures.
-Compare Omnicapture prompt vs manual prompt.
-Continue only if Omnicapture is faster or more accurate in at least 7 of 10 cases.
+Compare OpenVysta prompt vs manual prompt.
+Continue only if OpenVysta is faster or more accurate in at least 7 of 10 cases.
 ```
 
 Required Phase 1 artifacts:
@@ -960,11 +951,6 @@ src/compiler/index.ts
 src/compiler/schema.ts
 src/opencode-bridge/index.ts
 src/preview/index.ts or scripts/preview.ts
-evals/tasks/<task-id>/input.md
-evals/tasks/<task-id>/screenshots/
-evals/tasks/<task-id>/manual-prompt.md
-evals/tasks/<task-id>/omnicapture-output.md
-evals/tasks/<task-id>/scorecard.md
 ```
 
 Build-complete gate:
@@ -976,7 +962,7 @@ Compiler, bridge, CLI preview, artifact writing, fallback handling, unit tests, 
 Validation-complete gate:
 
 ```text
-10 real UI tasks scored. Omnicapture wins at least 7 of 10 against manual prompts.
+10 real UI tasks scored. OpenVysta wins at least 7 of 10 against manual prompts.
 ```
 
 Phase 1 fails if any of these are true:
@@ -984,10 +970,10 @@ Phase 1 fails if any of these are true:
 1. The generated prompt is mostly a transcript cleanup rather than an implementation brief.
 2. The visible prompt hides uncertainty or invents file/component certainty.
 3. The hidden context is required for correctness but cannot be recovered from saved artifacts.
-4. The eval cannot distinguish manual prompt quality from Omnicapture prompt quality.
+4. The eval cannot distinguish manual prompt quality from OpenVysta prompt quality.
 5. The app shell becomes the main work before the compiler is useful.
 
-### Phase 2: macOS Omnicapture
+### Phase 2: macOS OpenVysta capture
 
 Goal: implement the real ritual.
 
@@ -1057,7 +1043,7 @@ Goal: harden and expand the eval suite after native capture exists.
 Tasks:
 
 1. Expand to 30 golden UI capture examples.
-2. Compare manual prompt vs Omnicapture prompt across multiple apps.
+2. Compare manual prompt vs OpenVysta prompt across multiple apps.
 3. Measure first-pass OpenCode success.
 4. Measure time from intent to submitted prompt.
 5. Track false-target failures.
@@ -1066,7 +1052,7 @@ Tasks:
 Exit criteria:
 
 ```text
-The creator uses Omnicapture as default for UI change prompts for one full workday.
+The creator uses OpenVysta as default for UI change prompts for one full workday.
 ```
 
 ### 19.1 Agent Handoff Runbook
@@ -1132,7 +1118,7 @@ Agent anti-overbuild rules:
 Use this prompt when handing implementation to an agent:
 
 ```text
-You are building the OmniCaptain one-shot MVP from PRD.md.
+You are building the OpenVysta one-shot MVP from PRD.md.
 
 Goal:
 Build a TypeScript manual compiler and OpenCode bridge that accepts transcript text, 2 to 5 screenshots, and optional browser metadata JSON, then generates a visible implementation prompt plus hidden context packet, previews it, and sends it to OpenCode with safe fallbacks.
@@ -1167,7 +1153,7 @@ Acceptance:
 - The bridge can inject hidden context with `noReply: true` or fall back to saved hidden context plus visible prompt clipboard instructions.
 - The terminal preview exposes [s] Send, [r] Retry, [c] Cancel.
 - At least one end-to-end local fixture runs successfully.
-- The eval harness can store 10 manual-vs-Omnicapture scorecards.
+- The eval harness can store 10 manual-vs-OpenVysta scorecards.
 - The result clearly distinguishes build-complete from validation-complete.
 ```
 
@@ -1179,7 +1165,7 @@ The MVP can start with assumptions, but these choices should be confirmed before
 | --- | --- | --- |
 | First model path | Use the current OpenCode-configured model or user-selected OpenCode model | Avoids separate provider credentials, but requires image-capability verification. |
 | Preview surface | Start with CLI; add local web preview only if cheap | Avoids desktop-shell work before compiler proof. |
-| Artifact location | `./.omnicaptain/runs/<timestamp>/` | Keeps generated artifacts obvious and git-ignorable. |
+| Artifact location | `./.openvysta/runs/<timestamp>/` | Keeps generated artifacts obvious and git-ignorable. |
 | Send behavior | Append prompt and wait for user confirmation by default | Safer than auto-submit while prompt quality is unproven. |
 | Eval scoring | Human-scored scorecard first | Automated success is hard before real code changes are observed. |
 | Clipboard fallback | Allowed for visible prompt only | Hidden context may be too large or sensitive for clipboard by default. |
@@ -1194,7 +1180,7 @@ Recommended defaults:
 ```text
 Model path: current/user-selected OpenCode model only; no separate provider integration.
 Preview: terminal CLI first; no web card unless separately approved.
-Artifacts: ./.omnicaptain/runs/ ignored by git.
+Artifacts: ./.openvysta/runs/ ignored by git.
 Send behavior: append, do not auto-submit by default.
 Eval scoring: human scorecard with simple 0/1 win field.
 Auto-submit: disabled unless explicit flag is set.
@@ -1238,13 +1224,13 @@ Build-complete MVP is complete when:
 8. On `Send`, hidden context is injected into OpenCode or saved as documented fallback, and visible prompt is appended. Auto-submit is not default MVP behavior.
 9. If OpenCode hidden context injection fails, `hidden-context.json` is saved, the visible prompt references it, and the user sees explicit fallback instructions.
 10. The visible prompt is honest about uncertainty and asks OpenCode to inspect first.
-11. The user completes at least one real UI change through OpenCode using OmniCaptain output.
+11. The user completes at least one real UI change through OpenCode using OpenVysta output.
 12. Unit tests and one fixture E2E pass.
 
 Validation-complete MVP is complete when:
 
 1. 10 real UI tasks are scored with the PRD scorecard.
-2. Omnicapture prompts beat manual prompts on at least 7 of 10 real UI tasks.
+2. OpenVysta prompts beat manual prompts on at least 7 of 10 real UI tasks.
 3. Native macOS capture remains blocked until this gate passes.
 
 ## 22. Risks
@@ -1253,12 +1239,12 @@ Validation-complete MVP is complete when:
 | --- | --- | --- |
 | Product becomes just a screen recorder | High | Keep positioning and UI centered on intent compilation, not recordings. |
 | DOM/computer-use products commoditize browser work | High | Use DOM as enrichment, not identity. Focus on human-to-agent intent. |
-| Prompt quality not good enough | High | Build golden evals before overbuilding capture infrastructure. |
+| Prompt quality not good enough | High | Build a golden validation suite before overbuilding capture infrastructure. |
 | MVP scope expands into native capture too early | High | Treat Phase 0 and Phase 1 as the only MVP scope. Gate Phase 2 on eval results. |
 | Screen/audio/browser capture leaks sensitive data | High | Require explicit capture moments, local-first storage, redaction, and visible cloud-upload indicators. |
 | OpenCode hidden-context assumptions fail | High | Verify in Phase 0 and implement visible/clipboard/file fallbacks. |
 | Agent builds the shiny native shell first | High | Give the implementation agent this PRD and enforce the Phase 0/1 stop gates. |
-| Cloud model costs or latency make evals painful | Medium | Start with small screenshots, model abstraction, and cached fixture outputs. |
+| Cloud model costs or latency make the validation suite painful | Medium | Start with small screenshots, model abstraction, and cached fixture outputs. |
 | Provider-specific APIs leak into compiler logic | Medium | Keep provider code behind one compiler adapter boundary. |
 | Preview UI consumes too much time | Medium | Accept CLI preview first; UI polish is not core value. |
 | False file/component guesses mislead OpenCode | Medium | Mark scout results as hypotheses with confidence and reasons. |
@@ -1272,7 +1258,7 @@ The product is weak if it is framed as AI operating a UI. Anthropic, OpenAI, Pla
 
 The product is strong if it is framed as the missing human-intent interface for coding agents.
 
-Direct DOM/component interaction does not invalidate OmniCaptain. It enriches it. DOM tools help machines understand and manipulate software. OmniCaptain helps humans express ambiguous visual intent to those machines.
+Direct DOM/component interaction does not invalidate OpenVysta. It enriches it. DOM tools help machines understand and manipulate software. OpenVysta helps humans express ambiguous visual intent to those machines.
 
 ## 24. Recommended Next Step
 

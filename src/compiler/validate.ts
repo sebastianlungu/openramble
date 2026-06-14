@@ -85,7 +85,7 @@ export function formatBlockerReport(result: ValidationResult): string {
   const lines = [
     "# Capture Blocker",
     "",
-    "OmniCapture could not produce a reliable implementation brief.",
+    "OpenVysta could not produce a reliable implementation brief.",
     "",
     "## Failed Checks",
     ...failed.map((c) => `- ${c.message}`),

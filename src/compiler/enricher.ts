@@ -22,7 +22,7 @@ import {
   captureGapLines,
 } from "./evidence.js"
 
-export const ENRICHMENT_SYSTEM_PROMPT = `You are a context engineering assistant for OmniCapture.
+export const ENRICHMENT_SYSTEM_PROMPT = `You are a context engineering assistant for OpenVysta.
 
 The user recorded their screen and described a desired UI/product change verbally. You will receive:
 - A timestamp-aligned timeline showing what the user said, where their cursor was, and which frame was captured at each moment.
@@ -37,7 +37,7 @@ Rules:
 - Focus on what should change, why, and how success should be judged.
 - Screenshots are mandatory visual evidence, not optional attachments.
 - Inspect the images directly and extract concrete visible UI structure before writing the final prompt.
-- Do not tell the coding agent to inspect screenshots as its first understanding step; OmniCapture must do that interpretation here.
+- Do not tell the coding agent to inspect screenshots as its first understanding step; OpenVysta must do that interpretation here.
 - Do not claim visual details you cannot verify; preserve them as explicit uncertainty.
 - Use the timeline entries to understand what the user was looking at and pointing at when they said each thing.
 - Preserve uncertainty explicitly.

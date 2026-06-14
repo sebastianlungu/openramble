@@ -80,10 +80,10 @@ async function createIsolatedTestSession(
 
 async function run() {
   console.log("================================================")
-  console.log("  OmniCaptain Phase 0: OpenCode Bridge Proof")
+  console.log("  OpenVysta Phase 0: OpenCode Bridge Proof")
   console.log("================================================\n")
 
-  const pngPath = resolve("/tmp/omnicaptain-phase0-test.png")
+  const pngPath = resolve("/tmp/openvysta-phase0-test.png")
 
   try {
     // --- Test 1: Server connection ---
@@ -150,15 +150,15 @@ async function run() {
 
     // --- Test 3: Model capability detection ---
     console.log("--- Test 3: Model capability detection ---")
-    let omnicaptureModelSupportsImage = false
+    let vystaModelSupportsImage = false
     try {
       const capabilities = await getModelCapabilities(client)
-      const omnicaptureModel = findModelCapability(
+      const vystaModel = findModelCapability(
         capabilities,
         PROOF_MODEL
       )
-      omnicaptureModelSupportsImage =
-        omnicaptureModel?.supportsImageInput ?? false
+      vystaModelSupportsImage =
+        vystaModel?.supportsImageInput ?? false
 
       const imageModels = capabilities.models.filter((m) => m.supportsImageInput)
       const textOnlyModels = capabilities.models.filter((m) => !m.supportsImageInput)
@@ -173,10 +173,10 @@ async function run() {
           textOnlyModels: textOnlyModels.length,
           defaultModel: capabilities.defaultModel,
           defaultSupportsImage: capabilities.defaultModelSupportsImage,
-          omnicaptureModel: omnicaptureModel
-            ? `${omnicaptureModel.providerId}/${omnicaptureModel.modelId}`
+          vystaModel: vystaModel
+            ? `${vystaModel.providerId}/${vystaModel.modelId}`
             : PROOF_MODEL,
-          omnicaptureSupportsImage: omnicaptureModelSupportsImage,
+          vystaSupportsImage: vystaModelSupportsImage,
           imageCapableSample: imageModels.slice(0, 5).map((m) => `${m.providerId}/${m.modelId}`),
         }
       )
@@ -214,7 +214,7 @@ async function run() {
           body: {
             noReply: true,
             parts: [
-              { type: "text", text: "[HIDDEN CONTEXT TEST] This is a hidden context injection test from OmniCaptain Phase 0." },
+              { type: "text", text: "[HIDDEN CONTEXT TEST] This is a hidden context injection test from OpenVysta Phase 0." },
             ],
           },
         })
@@ -265,7 +265,7 @@ async function run() {
     try {
       const appendResponse = await client.tui.appendPrompt({
         body: {
-          text: "[OmniCaptain Phase 0 Test] This is a test prompt appended by the OmniCaptain bridge proof script.",
+          text: "[OpenVysta Phase 0 Test] This is a test prompt appended by the OpenVysta bridge proof script.",
         },
       })
 
@@ -308,13 +308,13 @@ async function run() {
     // --- Test 6: File part test ---
     console.log("--- Test 6: File part test ---")
     try {
-      if (!omnicaptureModelSupportsImage) {
+      if (!vystaModelSupportsImage) {
         record(
           "File part test (image)",
           false,
-          "SKIPPED: OmniCapture model does not support image input. File parts cannot be tested.",
+          "SKIPPED: OpenVysta model does not support image input. File parts cannot be tested.",
           {
-            finding: `An image-capable OmniCapture model must be configured. Expected ${PROOF_MODEL}.`,
+            finding: `An image-capable OpenVysta model must be configured. Expected ${PROOF_MODEL}.`,
           }
         )
       } else {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "OmniCaptain Browser Context",
+  "name": "OpenVysta Browser Context",
   "version": "0.1.0",
-  "description": "Captures browser context for OmniCaptain prompt enrichment",
+  "description": "Captures browser context for OpenVysta prompt enrichment",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {

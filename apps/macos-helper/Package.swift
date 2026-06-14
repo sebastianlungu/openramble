@@ -2,21 +2,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "OmniCapture",
+    name: "OpenVysta",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "omnicapture", targets: ["OmniCapture"])
+        .executable(name: "openvysta", targets: ["OpenVysta"])
     ],
     targets: [
         .executableTarget(
-            name: "OmniCapture",
-            path: "Sources/OmniCapture",
+            name: "OpenVysta",
+            path: "Sources/OpenVysta",
             exclude: ["Info.plist"]
         ),
         .testTarget(
-            name: "OmniCaptureTests",
-            dependencies: ["OmniCapture"],
-            path: "Tests/OmniCaptureTests"
+            name: "OpenVystaTests",
+            dependencies: ["OpenVysta"],
+            path: "Tests/OpenVystaTests"
         )
     ]
 )

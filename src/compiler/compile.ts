@@ -210,7 +210,7 @@ export function generateHiddenContext(
   browserContext?: BrowserContext
 ): Record<string, unknown> {
   return {
-    captureId: `omni_${randomUUID().replace(/-/g, "_")}`,
+    captureId: `vysta_${randomUUID().replace(/-/g, "_")}`,
     runRoot: paths.hiddenCtxAbs.split("/").slice(0, -1).join("/"),
     transcript,
     transcriptPath: paths.transcriptAbs,
@@ -284,7 +284,7 @@ export function compile(args: CompileArgs): CompileResult {
   )
 
   const promptDraft: PromptDraft = {
-    title: "OmniCapture Compiled Prompt",
+    title: "OpenVysta Compiled Prompt",
     visiblePrompt,
     hiddenContext,
     confidence: "medium" as const,

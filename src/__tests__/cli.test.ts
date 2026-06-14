@@ -9,7 +9,7 @@ describe("CLI", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "omni-cli-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "vysta-cli-test-"))
   })
 
   afterEach(() => {
@@ -54,7 +54,7 @@ describe("CLI", () => {
 
     expect(exitCode).toBe(0)
     expect(stderr).not.toContain("No session ID")
-    expect(stdout).toContain("OmniCapture Compiled Prompt")
+    expect(stdout).toContain("OpenVysta Compiled Prompt")
     expect(runArtifactExists("visible-prompt.md")).toBe(true)
   })
 
@@ -96,7 +96,7 @@ describe("CLI", () => {
   })
 
   it("writes directly into a concrete macOS run directory", async () => {
-    const runDir = join(tmpDir, "omni_2026-06-10T21-04-36Z")
+    const runDir = join(tmpDir, "vysta_2026-06-10T21-04-36Z")
     const proc = Bun.spawn([
       "bun",
       "run",
@@ -131,11 +131,11 @@ describe("CLI", () => {
     expect(stderr).toBe("")
     expect(stdout).toContain(`Run folder: ${resolve(runDir)}`)
     expect(existsSync(join(runDir, "visible-prompt.md"))).toBe(true)
-    expect(readdirSync(runDir).some((name) => name.startsWith("omni_"))).toBe(false)
+    expect(readdirSync(runDir).some((name) => name.startsWith("vysta_"))).toBe(false)
   })
 
-  it("creates a nested run directory under an omni-prefixed parent directory", async () => {
-    const parentDir = join(tmpDir, "omni_runs")
+  it("creates a nested run directory under a vysta-prefixed parent directory", async () => {
+    const parentDir = join(tmpDir, "vysta_runs")
     const proc = Bun.spawn([
       "bun",
       "run",
@@ -169,7 +169,7 @@ describe("CLI", () => {
     expect(stderr).toBe("")
     expect(existsSync(join(parentDir, "visible-prompt.md"))).toBe(false)
 
-    const runDirs = readdirSync(parentDir).filter((name) => /^omni_\d{13}$/.test(name))
+    const runDirs = readdirSync(parentDir).filter((name) => /^vysta_\d{13}$/.test(name))
     expect(runDirs.length).toBe(1)
     expect(existsSync(join(parentDir, runDirs[0]!, "visible-prompt.md"))).toBe(true)
   })
@@ -179,7 +179,7 @@ describe("CLI", () => {
   }
 
   function firstRunDir(): string {
-    return readdirSync(tmpDir).find((name) => name.startsWith("omni_")) ?? ""
+    return readdirSync(tmpDir).find((name) => name.startsWith("vysta_")) ?? ""
   }
 })
 
@@ -187,7 +187,7 @@ describe("CLI append-prompt", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "omni-append-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "vysta-append-test-"))
   })
 
   afterEach(() => {
@@ -288,7 +288,7 @@ describe("CLI compile --enrich", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "omni-enrich-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "vysta-enrich-test-"))
   })
 
   afterEach(() => {
@@ -402,7 +402,7 @@ describe("CLI compile --enrich", () => {
       proc.exited,
     ])
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("omni_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     const runRecord = JSON.parse(readFileSync(join(runRoot, "run.json"), "utf-8"))
 
@@ -443,7 +443,7 @@ describe("CLI compile --enrich", () => {
       proc.exited,
     ])
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("omni_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     const runRecord = JSON.parse(readFileSync(join(runRoot, "run.json"), "utf-8"))
 
@@ -479,7 +479,7 @@ describe("CLI compile --enrich", () => {
 
     await proc.exited
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("omni_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     expect(existsSync(join(runRoot, "hidden-context.json"))).toBe(true)
     const hiddenCtx = JSON.parse(readFileSync(join(runRoot, "hidden-context.json"), "utf-8"))
@@ -487,7 +487,7 @@ describe("CLI compile --enrich", () => {
   })
 
   it("keeps best-effort prompt generation when segments are empty but screenshots exist", async () => {
-    const brokenDir = join(tmpdir(), `omni_2026-01-01T00-00-00Z`)
+    const brokenDir = join(tmpdir(), `vysta_2026-01-01T00-00-00Z`)
     mkdirSync(join(brokenDir, "inputs", "screenshots"), { recursive: true })
     writeFileSync(join(brokenDir, "inputs", "transcript.md"), "replicate this over here")
     writeFileSync(join(brokenDir, "inputs", "screenshots", "1.png"), "fake")

@@ -22,7 +22,7 @@
 | npm package | Medium | Not published. |
 | Browser extension | Medium | Incomplete, unclear state. |
 | API docs | Medium | No docs on compiler interface, schemas, or CLI. |
-| Example tasks | Medium | `evals/tasks/` is good but undocumented. |
+| Example tasks | Medium | None yet. |
 | Security policy | Medium | No SECURITY.md. |
 | Changelog | Low | None. |
 | Code of Conduct | Low | None. |
