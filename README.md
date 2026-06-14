@@ -179,7 +179,7 @@ The native capture (mouse chord, audio, screen recording) is a Swift package usi
 ./apps/macos-helper/install.sh
 ```
 
-The install script is stable-signed with a dedicated developer identity (`OmniCapture Dev` in your keychain) so macOS TCC permissions persist across rebuilds. If the signing identity ever changes, ScreenCapture TCC is reset automatically before relaunch.
+The install script is stable-signed with a dedicated developer identity (`OpenVysta Dev` in your keychain) so macOS TCC permissions persist across rebuilds. If the signing identity ever changes, ScreenCapture TCC is reset automatically before relaunch.
 
 ## Non-goals
 

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APP="/Applications/OpenVysta.app"
 BINARY="$SCRIPT_DIR/.build/release/openvysta"
-SIGN_IDENTITY="${SIGN_IDENTITY:-OmniCapture Dev}"
+SIGN_IDENTITY="${SIGN_IDENTITY:-OpenVysta Dev}"
 BUNDLE_ID="ai.openvysta.macos-helper"
 LOGIN_KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 SIGNING_DIR="/tmp/oc"
@@ -87,6 +87,7 @@ if [ ! -f "$APP/Contents/Info.plist" ]; then
 fi
 
 echo "Building..."
+cd "$SCRIPT_DIR"
 swift build -c release
 
 if [ ! -x "$BINARY" ]; then

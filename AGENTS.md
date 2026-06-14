@@ -174,7 +174,7 @@ Before writing or refactoring any code, load the matching skill for the file's l
 - Do not add heavyweight providers, cloud STT, Whisper, or expand native capture scope unless explicitly approved.
 - Do not hardcode OpenCode server URLs, session IDs, user emails, provider credentials, or local absolute paths into source.
 - Do not write to `memory/` or `MEMORY.md`.
-- For macOS helper rebuilds, always install to `/Applications` and stable-sign with `OmniCapture Dev` via `/sign` or `apps/macos-helper/install.sh`; never ad-hoc sign, and if the signing identity changed reset `ScreenCapture` TCC before relaunching.
+- For macOS helper rebuilds, always install to `/Applications` and stable-sign with `OpenVysta Dev` via `/sign` or `apps/macos-helper/install.sh`; never ad-hoc sign, and if the signing identity changed reset `ScreenCapture` TCC before relaunching.
 - Keep changes small, testable, and artifact-first.
 - Treat screenshot paths as replay evidence, not as proof of visual understanding.
 - Fail loudly at evidence boundaries.
