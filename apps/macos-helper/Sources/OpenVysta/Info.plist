@@ -6,5 +6,7 @@
 	<string>OpenVysta needs microphone access to record and transcribe your voice for capturing context.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>OpenVysta uses speech recognition to transcribe your spoken instructions.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>OpenVysta records your screen while the capture hotkey is held so it can compile a prompt for your coding agent.</string>
 </dict>
 </plist>
