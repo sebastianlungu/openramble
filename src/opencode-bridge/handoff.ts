@@ -87,7 +87,7 @@ async function tryHiddenInjection(
     const parts: Array<{ type: "text"; text: string } | FilePart> = [
       {
         type: "text",
-        text: `[OMNICAPTAIN HIDDEN CONTEXT] ${hiddenText}`,
+        text: `[OPENVYSTA HIDDEN CONTEXT] ${hiddenText}`,
       },
     ]
 
