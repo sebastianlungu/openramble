@@ -62,6 +62,44 @@ expected_leaf_hash() {
     tr '[:upper:]' '[:lower:]'
 }
 
+sync_privacy_keys() {
+  local source_plist="$SCRIPT_DIR/Sources/OpenVysta/Info.plist"
+  local target_plist="$APP/Contents/Info.plist"
+
+  if [ ! -f "$source_plist" ]; then
+    return 0
+  fi
+
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 is required to sync Info.plist privacy keys" >&2
+    exit 1
+  fi
+
+  SOURCE_PLIST="$source_plist" TARGET_PLIST="$target_plist" python3 - <<'PY'
+import os, plistlib, sys
+
+src_path = os.environ["SOURCE_PLIST"]
+tgt_path = os.environ["TARGET_PLIST"]
+
+with open(src_path, "rb") as f:
+    src = plistlib.load(f)
+with open(tgt_path, "rb") as f:
+    tgt = plistlib.load(f)
+
+changed = 0
+for k, v in src.items():
+    if not isinstance(v, str):
+        continue
+    if tgt.get(k) != v:
+        print(f"  syncing {k}")
+        changed += 1
+    tgt[k] = v
+
+with open(tgt_path, "wb") as f:
+    plistlib.dump(tgt, f)
+PY
+}
+
 reset_screen_recording_if_identity_changed() {
   local authority requirement leaf_hash
   authority="$(current_authority || true)"
@@ -103,6 +141,11 @@ reset_screen_recording_if_identity_changed
 
 echo "Installing binary..."
 cp "$BINARY" "$APP/Contents/MacOS/openvysta"
+
+echo "Syncing Info.plist privacy keys from source..."
+sync_privacy_keys
+/usr/libexec/PlistBuddy -c "Print :NSSpeechRecognitionUsageDescription" "$APP/Contents/Info.plist" >/dev/null
+/usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$APP/Contents/Info.plist" >/dev/null
 
 echo "Stamping repo root: $REPO_ROOT"
 /usr/libexec/PlistBuddy -c "Set :OpenVystaRepoRoot $REPO_ROOT" "$APP/Contents/Info.plist" 2>/dev/null || \
