@@ -223,3 +223,9 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecke
         onError?(error)
     }
 }
+
+#if DEBUG
+extension ScreenCapture {
+    var runningFrameIndexForTesting: Int { runningFrameIndex }
+}
+#endif

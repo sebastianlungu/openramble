@@ -14,6 +14,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkeyAvailable = false
     private var historyPopover: NSPopover?
     private let historyManager = PromptHistoryManager()
+#if DEBUG
+    private var smokeController: CaptureSmokeController?
+    private var smokePopover: NSPopover?
+#endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -96,6 +100,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(historyItem)
 
         menu.addItem(.separator())
+
+#if DEBUG
+        let smokeItem = NSMenuItem(
+            title: "Run Capture Smoke",
+            action: #selector(showSmoke),
+            keyEquivalent: ""
+        )
+        smokeItem.tag = 500
+        menu.addItem(smokeItem)
+        menu.addItem(.separator())
+#endif
 
         menu.addItem(NSMenuItem(
             title: "Quit OpenVysta",
@@ -264,4 +279,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quit() {
         NSApp.terminate(nil)
     }
+#if DEBUG
+    @objc private func showSmoke() {
+        if let popover = smokePopover, popover.isShown {
+            popover.performClose(nil)
+            smokePopover = nil
+            return
+        }
+
+        let controller = smokeController ?? CaptureSmokeController(engine: captureEngine)
+        smokeController = controller
+
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 380, height: 480)
+        popover.behavior = .transient
+        popover.animates = true
+
+        let hostingView = NSHostingView(
+            rootView: CaptureSmokeView(
+                model: controller.model,
+                onRun: { [weak controller] in
+                    controller?.startSmoke()
+                }
+            )
+        )
+        popover.contentViewController = NSViewController()
+        popover.contentViewController?.view = hostingView
+
+        if let button = statusItem?.button {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
+
+        smokePopover = popover
+    }
+#endif
 }
