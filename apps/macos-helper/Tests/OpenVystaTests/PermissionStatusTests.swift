@@ -35,4 +35,24 @@ struct PermissionStatusTests {
 
         #expect(!status.onlyScreenRecordingIsMissing)
     }
+
+    @Test func preservesAccessibilityStatusIndependently() {
+        let granted = PermissionStatus(
+            screenRecording: true,
+            microphone: true,
+            speechRecognition: true,
+            accessibility: true
+        )
+        let denied = PermissionStatus(
+            screenRecording: true,
+            microphone: true,
+            speechRecognition: true,
+            accessibility: false
+        )
+
+        #expect(granted.accessibility)
+        #expect(!denied.accessibility)
+        #expect(granted.allGranted)
+        #expect(denied.allGranted)
+    }
 }

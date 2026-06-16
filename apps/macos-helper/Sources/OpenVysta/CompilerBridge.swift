@@ -4,7 +4,6 @@ protocol CompilerBridgeProtocol: Sendable {
     func compile(
         transcriptPath: String,
         screenshotPaths: [String],
-        browserMetadataPath: String?,
         audioPath: String?,
         videoPath: String?,
         runDir: String,
@@ -71,7 +70,6 @@ final class CompilerBridge: CompilerBridgeProtocol {
     func compile(
         transcriptPath: String,
         screenshotPaths: [String],
-        browserMetadataPath: String?,
         audioPath: String?,
         videoPath: String?,
         runDir: String,
@@ -97,9 +95,6 @@ final class CompilerBridge: CompilerBridgeProtocol {
             args.append(path)
         }
 
-        if let browserPath = browserMetadataPath {
-            args.append(contentsOf: ["--browser", browserPath])
-        }
         if let audioPath = audioPath {
             args.append(contentsOf: ["--audio", audioPath])
         }

@@ -147,7 +147,6 @@ struct CompilerBridgeTests {
         _ = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -191,7 +190,6 @@ struct CompilerBridgeTests {
         _ = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -202,6 +200,27 @@ struct CompilerBridgeTests {
 
         #expect(mock.lastArgs.contains("--opencode-server"))
         #expect(mock.lastArgs.contains(serverUrl))
+    }
+
+    @Test func compileNeverPassesLegacyBrowserFlag() async throws {
+        let mock = MockProcessRunner()
+        let bridge = CompilerBridge(processRunner: mock)
+
+        let outDir = tempRoot.appendingPathComponent("compile-no-browser-out")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        _ = await bridge.compile(
+            transcriptPath: "/tmp/transcript.md",
+            screenshotPaths: ["/tmp/1.png"],
+            audioPath: nil,
+            videoPath: nil,
+            runDir: outDir.path,
+            sessionId: nil,
+            autoSend: false,
+            enrich: false
+        )
+
+        #expect(!mock.lastArgs.contains("--" + ["bro", "wser"].joined()))
     }
 
     @Test func compileWithEnrichEnsuresServerBeforeRunningCompiler() async throws {
@@ -215,7 +234,6 @@ struct CompilerBridgeTests {
         _ = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -240,7 +258,6 @@ struct CompilerBridgeTests {
         let output = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -267,7 +284,6 @@ struct CompilerBridgeTests {
         _ = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -290,7 +306,6 @@ struct CompilerBridgeTests {
         _ = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -437,7 +452,6 @@ struct CompilerBridgeTests {
         let output = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,
@@ -476,7 +490,6 @@ struct CompilerBridgeTests {
         let output = await bridge.compile(
             transcriptPath: "/tmp/transcript.md",
             screenshotPaths: [],
-            browserMetadataPath: nil,
             audioPath: nil,
             videoPath: nil,
             runDir: outDir.path,

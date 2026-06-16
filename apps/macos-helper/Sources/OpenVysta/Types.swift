@@ -55,7 +55,6 @@ struct ArtifactManifest: Codable {
     var audio: AudioEntry?
     var video: VideoEntry?
     var screenshots: [ArtifactEntry]
-    var browserMetadata: BrowserEntry
     var hiddenContext: PathEntry
     var visiblePrompt: PathEntry
 }
@@ -75,12 +74,6 @@ struct AudioEntry: Codable {
 
 struct VideoEntry: Codable {
     var original: String
-    var supplied: Bool
-}
-
-struct BrowserEntry: Codable {
-    var path: String?
-    var absolutePath: String?
     var supplied: Bool
 }
 

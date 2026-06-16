@@ -20,7 +20,7 @@
 | macOS code signing | High | App won't open on other Macs without notarization. |
 | Setup/install docs | High | No instructions to run locally. |
 | npm package | Medium | Not published. |
-| Browser extension | Medium | Incomplete, unclear state. |
+| Product docs | Medium | Need the public docs to stay aligned with the narrowed speech/screenshot/cursor contract. |
 | API docs | Medium | No docs on compiler interface, schemas, or CLI. |
 | Example tasks | Medium | None yet. |
 | Security policy | Medium | No SECURITY.md. |
@@ -33,7 +33,7 @@
 2. Write a 200-line README: what it is, screenshot, quickstart, architecture
 3. Add GitHub Actions CI (build TS, run tests, build Swift)
 4. Add `CONTRIBUTING.md`
-5. Either remove or properly package the browser extension + macOS app
+5. Package the macOS helper clearly and keep the browser/DOM purge reflected in public docs
 6. Add `.github/ISSUE_TEMPLATE` and `PULL_REQUEST_TEMPLATE.md`
 
 The code itself is publishable. The packaging and docs are not.

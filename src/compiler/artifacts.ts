@@ -5,7 +5,6 @@ import type { ArtifactManifest, ArtifactManifestEntry, RunRecord, SentToModel, I
 export type ArtifactArgs = {
   transcriptPath: string
   screenshotPaths: string[]
-  browserMetadataPath?: string
   audioPath?: string
   videoPath?: string
   runRoot: string
@@ -89,13 +88,6 @@ export function generateArtifactManifest(
       mimeType: "image/png",
       supplied: true,
     })),
-    browserMetadata: args.paths.browser
-      ? {
-          path: args.paths.browser.rel,
-          absolutePath: args.paths.browser.abs,
-          supplied: true,
-        }
-      : { path: undefined, absolutePath: undefined, supplied: false },
     hiddenContext: {
       path: args.paths.hiddenCtxRel,
       absolutePath: args.paths.hiddenCtxAbs,
@@ -137,15 +129,6 @@ export function writeManifestMarkdown(manifest: ArtifactManifest): void {
   }
   lines.push("")
 
-  if (manifest.browserMetadata.supplied && manifest.browserMetadata.path) {
-    lines.push("### Browser Metadata")
-    lines.push(`- ${manifest.browserMetadata.path}`)
-    if (manifest.browserMetadata.absolutePath) {
-      lines.push(`  Absolute: ${manifest.browserMetadata.absolutePath}`)
-    }
-    lines.push("")
-  }
-
   lines.push(`- Hidden Context: ${manifest.hiddenContext.path}`)
   lines.push(`  Absolute: ${manifest.hiddenContext.absolutePath}`)
   lines.push(`- Visible Prompt: ${manifest.visiblePrompt.path}`)
@@ -186,8 +169,7 @@ export function generateSentToModel(
   runId: string,
   model: { providerId: string; modelId: string },
   transcript: string,
-  screenshotPaths: string[],
-  browserIncluded: boolean
+  screenshotPaths: string[]
 ): SentToModel {
   const parts: SentToModel["parts"] = [
     {
@@ -217,7 +199,6 @@ export function generateSentToModel(
     totalBytes: parts.reduce((sum, p) => sum + (p.size ?? 0), 0),
     transcriptIncluded: true,
     screenshotsIncluded: screenshotPaths.length > 0,
-    browserMetadataIncluded: browserIncluded,
   }
 }
 
@@ -244,9 +225,6 @@ export function stageAllArtifacts(args: ArtifactArgs): void {
   setupArtifactDirs(args.runRoot)
   copyTranscript(args.transcriptPath, args.paths.transcriptAbs)
   copyScreenshots(args.screenshotPaths, args.paths)
-  if (args.browserMetadataPath && args.paths.browser) {
-    stageFile(args.browserMetadataPath, args.paths.browser.abs)
-  }
   if (args.audioPath && args.paths.audio) {
     stageFile(args.audioPath, args.paths.audio.abs)
   }

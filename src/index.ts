@@ -105,7 +105,6 @@ function printHelp(): void {
   console.log("Options:")
   console.log("  --transcript <path>       Required. Path to transcript file")
   console.log("  --screenshots <path>...   1-20 screenshot paths (.png/.jpg/.jpeg)")
-  console.log("  --browser <path>          Optional browser metadata JSON")
   console.log("  --audio <path>            Optional audio artifact (stored only)")
   console.log("  --video <path>            Optional local screen recording artifact")
   console.log("  --model <model>           Default: OpenCode configured model")
@@ -189,6 +188,11 @@ async function runAppendPrompt(args: ParsedArgs): Promise<void> {
 }
 
 async function runCompile(args: ParsedArgs): Promise<void> {
+  if (args.browser !== undefined) {
+    formatError("browser metadata inputs are not supported. Remove the legacy browser flag and retry.")
+    process.exit(1)
+  }
+
   const transcriptPath = (args.transcript as string) ?? ""
   if (!transcriptPath) {
     formatError("--transcript is required")
@@ -220,12 +224,6 @@ async function runCompile(args: ParsedArgs): Promise<void> {
       formatError(`Screenshot must be .png, .jpg, or .jpeg: ${p}`)
       process.exit(1)
     }
-  }
-
-  const browserMetadataPath = args.browser as string | undefined
-  if (browserMetadataPath && !existsSync(resolve(browserMetadataPath))) {
-    formatError(`Browser metadata not found: ${browserMetadataPath}`)
-    process.exit(1)
   }
 
   const audioPath = args.audio as string | undefined
@@ -281,7 +279,6 @@ async function runCompile(args: ParsedArgs): Promise<void> {
   const compileArgs: CompileArgs = {
     transcript: scanResult.redacted,
     screenshotPaths: screenshotPaths.map((p) => resolve(p)),
-    browserMetadataPath: browserMetadataPath ? resolve(browserMetadataPath) : undefined,
     audioPath: audioPath ? resolve(audioPath) : undefined,
     videoPath: videoPath ? resolve(videoPath) : undefined,
     runRoot,
@@ -347,7 +344,6 @@ async function runCompile(args: ParsedArgs): Promise<void> {
   stageAllArtifacts({
     transcriptPath: resolve(transcriptPath),
     screenshotPaths: compileArgs.screenshotPaths,
-    browserMetadataPath: compileArgs.browserMetadataPath,
     audioPath: compileArgs.audioPath,
     videoPath: compileArgs.videoPath,
     runRoot,
@@ -358,7 +354,6 @@ async function runCompile(args: ParsedArgs): Promise<void> {
   const manifest = generateArtifactManifest({
     transcriptPath: resolve(transcriptPath),
     screenshotPaths: compileArgs.screenshotPaths,
-    browserMetadataPath: compileArgs.browserMetadataPath,
     audioPath: compileArgs.audioPath,
     videoPath: compileArgs.videoPath,
     runRoot,
@@ -441,7 +436,6 @@ async function runCompile(args: ParsedArgs): Promise<void> {
       { providerId: "opencode", modelId: model },
       transcript,
       compileArgs.screenshotPaths,
-      !!browserMetadataPath
     )
     writeJsonArtifact(runRoot, "sent-to-model.json", sentToModel)
 

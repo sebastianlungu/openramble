@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test"
-import { scanText, scanBrowserMetadata, buildRedactionReport } from "../compiler/redact.js"
+import { scanText, buildRedactionReport } from "../compiler/redact.js"
 
 describe("Redaction", () => {
   it("redacts OpenAI-style API keys", () => {
@@ -60,26 +60,5 @@ describe("Redaction", () => {
     const report = buildRedactionReport("vysta_r1", [])
     expect(report.nothingRedacted).toBe(true)
     expect(report.redactions).toHaveLength(0)
-  })
-
-  it("scanBrowserMetadata redacts keys inside JSON", () => {
-    const meta = {
-      url: "http://localhost:3000",
-      config: {
-        apiKey: "sk-proj-test123456789abcdef",
-      },
-    }
-
-    const result = scanBrowserMetadata(meta)
-    expect(result.entries.length).toBeGreaterThan(0)
-    const json = JSON.stringify(result.redacted)
-    expect(json).toContain("[REDACTED]")
-  })
-
-  it("scanBrowserMetadata handles clean metadata", () => {
-    const meta = { url: "http://localhost:3000", title: "Test App" }
-    const result = scanBrowserMetadata(meta)
-    expect(result.entries).toHaveLength(0)
-    expect(result.redacted).toEqual(meta)
   })
 })

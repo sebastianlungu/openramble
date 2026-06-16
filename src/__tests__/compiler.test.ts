@@ -2,6 +2,11 @@ import { describe, it, expect } from "bun:test"
 import { compile, generateVisiblePrompt, generateHiddenContext, buildInputPaths } from "../compiler/compile.js"
 import { scanText } from "../compiler/redact.js"
 
+function expectNoRemovedField(obj: unknown, fieldParts: string[]): void {
+  const name = fieldParts.join("")
+  expect(obj).not.toHaveProperty(name)
+}
+
 describe("Compiler", () => {
   const transcript = "Change the login button to blue. Add more padding."
   const screenshotPaths = ["/tmp/s1.png", "/tmp/s2.png"]
@@ -20,17 +25,14 @@ describe("Compiler", () => {
     expect(paths.hiddenCtxRel).toBe("hidden-context.json")
   })
 
-  it("builds input paths with browser and audio", () => {
+  it("builds input paths with audio", () => {
     const paths = buildInputPaths({
       transcript,
       screenshotPaths,
-      browserMetadataPath: "/tmp/browser.json",
       audioPath: "/tmp/capture.m4a",
       runRoot,
     })
 
-    expect(paths.browser).toBeDefined()
-    expect(paths.browser!.rel).toBe("inputs/browser.json")
     expect(paths.audio).toBeDefined()
     expect(paths.audio!.rel).toBe("inputs/audio/original.m4a")
   })
@@ -53,16 +55,29 @@ describe("Compiler", () => {
     expect(prompt).not.toContain("## Artifacts")
   })
 
-  it("keeps browser metadata out of the visible fallback prompt", () => {
+  it("never includes a Likely Targets section in the visible prompt", () => {
     const paths = buildInputPaths({
       transcript,
       screenshotPaths,
-      browserMetadataPath: "/tmp/browser.json",
       runRoot,
     })
 
     const prompt = generateVisiblePrompt(transcript, paths)
-    expect(prompt).not.toContain("Browser metadata:")
+    expect(prompt).not.toContain("## Likely Targets")
+    expect(prompt).not.toContain("Likely Targets")
+  })
+
+  it("hidden context excludes browser and scout fields", () => {
+    const paths = buildInputPaths({
+      transcript,
+      screenshotPaths,
+      runRoot,
+    })
+
+    const ctx = generateHiddenContext(transcript, paths)
+    expectNoRemovedField(ctx, ["browser", "Metadata"])
+    expectNoRemovedField(ctx, ["browser", "Context"])
+    expectNoRemovedField(ctx, ["scout", "Result"])
   })
 
   it("keeps audio artifact paths out of the visible fallback prompt", () => {
@@ -89,6 +104,9 @@ describe("Compiler", () => {
     expect(ctx.transcript).toBe(transcript)
     expect(Array.isArray(ctx.screenshots)).toBe(true)
     expect(ctx.screenshots).toHaveLength(2)
+    expectNoRemovedField(ctx, ["browser", "Metadata"])
+    expectNoRemovedField(ctx, ["browser", "Context"])
+    expectNoRemovedField(ctx, ["scout", "Result"])
   })
 
   it("compile produces valid result", () => {
@@ -161,7 +179,7 @@ describe("Compiler", () => {
       runRoot,
     })
 
-    const prompt = generateVisiblePrompt(transcript, paths, undefined, {
+    const prompt = generateVisiblePrompt(transcript, paths, {
       frames: [
         { id: "frame_start_1", timestampMs: 36, path: "frame_start_1.png", reason: "start" },
         { id: "frame_pointer_pause_8", timestampMs: 271, path: "frame_pointer_pause_8.png", reason: "pointer_pause" },
