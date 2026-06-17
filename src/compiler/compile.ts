@@ -1,13 +1,9 @@
 import { randomUUID } from "node:crypto"
-import { readFileSync } from "node:fs"
 import type {
   PromptDraft,
   CompileResult,
   SelectedFrame,
   InputPaths,
-  BrowserContext,
-  ScoutResult,
-  ScoutHypothesis,
   TranscriptSegment,
   CursorEvent,
 } from "./schema.js"
@@ -25,12 +21,9 @@ import {
 export type CompileArgs = {
   transcript: string
   screenshotPaths: string[]
-  browserMetadataPath?: string
   audioPath?: string
   videoPath?: string
   runRoot: string
-  browserContext?: BrowserContext
-  scoutResult?: ScoutResult
   segments?: TranscriptSegment[]
   frames?: SelectedFrame[]
   cursorEvents?: CursorEvent[]
@@ -54,13 +47,6 @@ export function buildInputPaths(args: CompileArgs): InputPaths {
     }
   })
 
-  const browser = args.browserMetadataPath
-    ? {
-        rel: "inputs/browser.json",
-        abs: `${args.runRoot}/inputs/browser.json`,
-      }
-    : undefined
-
   const audio = args.audioPath
     ? {
         rel: `inputs/audio/original.${args.audioPath.split(".").pop() ?? "m4a"}`,
@@ -79,7 +65,6 @@ export function buildInputPaths(args: CompileArgs): InputPaths {
     transcriptRel,
     transcriptAbs,
     screenshots,
-    browser,
     audio,
     video,
     hiddenCtxRel: "hidden-context.json",
@@ -92,7 +77,6 @@ export function buildInputPaths(args: CompileArgs): InputPaths {
 export function generateVisiblePrompt(
   transcript: string,
   paths: InputPaths,
-  scoutHypotheses?: ScoutHypothesis[],
   evidence: PromptEvidence = {}
 ): string {
   const transcriptEvidence = buildTranscriptEvidence(transcript, evidence.segments)
@@ -105,7 +89,6 @@ export function generateVisiblePrompt(
     hasVideo: paths.video !== undefined,
     deicticRisk: containsDeicticLanguage(transcript),
   }).join("\n")
-  const likelyTargetsSection = buildLikelyTargets(scoutHypotheses)
 
   return `## Intent
 ${trimTranscript(transcript)}
@@ -119,7 +102,6 @@ ${cursorEvidence}
 
 ## Do
 ${extractChanges(transcript)}
-${likelyTargetsSection}
 
 ## Acceptance
 - [ ] The implementation matches the interpreted intent and target above.
@@ -180,34 +162,9 @@ function extractChanges(transcript: string): string {
   return lines.map((l, i) => `${i + 1}. ${l}`).join("\n")
 }
 
-function buildLikelyTargets(hypotheses?: ScoutHypothesis[]): string {
-  if (!hypotheses || hypotheses.length === 0) return ""
-
-  const mediumPlus = hypotheses.filter(
-    (h) => h.confidence === "medium" || h.confidence === "high"
-  )
-  if (mediumPlus.length === 0) return ""
-
-  const lines = mediumPlus.map((h) => {
-    const tag = h.confidence === "high" ? "[HIGH]" : "[MEDIUM]"
-    const name = h.name ?? h.path?.split("/").pop() ?? "unknown"
-    const path = h.path ?? "unknown path"
-    return `- ${tag} ${name} at ${path} — ${h.reason}`
-  })
-
-  return `
-## Likely Targets
-The scout inferred the following likely files/components from browser context. Treat as hypotheses; inspect before editing.
-${lines.join("\n")}
-`
-}
-
 export function generateHiddenContext(
   transcript: string,
-  paths: InputPaths,
-  browserMetadata?: Record<string, unknown>,
-  scoutResult?: ScoutResult,
-  browserContext?: BrowserContext
+  paths: InputPaths
 ): Record<string, unknown> {
   return {
     captureId: `vysta_${randomUUID().replace(/-/g, "_")}`,
@@ -218,9 +175,6 @@ export function generateHiddenContext(
       relative: s.rel,
       absolute: s.abs,
     })),
-    browserMetadata: browserMetadata ?? null,
-    browserContext: browserContext ?? null,
-    scoutResult: scoutResult ?? null,
     audioPath: paths.audio?.abs ?? null,
     videoPath: paths.video?.abs ?? null,
     manifestPath: paths.manifestAbs,
@@ -249,39 +203,13 @@ export function compile(args: CompileArgs): CompileResult {
 
   const paths = buildInputPaths(args)
 
-  const scoutHypotheses = args.scoutResult
-    ? [
-        ...(args.scoutResult.likelyFiles ?? []),
-        ...(args.scoutResult.likelyComponents ?? []),
-      ]
-    : undefined
-
-  const visiblePrompt = generateVisiblePrompt(args.transcript, paths, scoutHypotheses, {
+  const visiblePrompt = generateVisiblePrompt(args.transcript, paths, {
     segments: args.segments,
     frames: args.frames,
     cursorEvents: args.cursorEvents,
   })
 
-  let browserMetadata: Record<string, unknown> | undefined
-  if (args.browserMetadataPath) {
-    try {
-      browserMetadata = JSON.parse(
-        readFileSync(args.browserMetadataPath, "utf-8")
-      )
-    } catch {
-      warnings.push(
-        `Failed to parse browser metadata at ${args.browserMetadataPath}`
-      )
-    }
-  }
-
-  const hiddenContext = generateHiddenContext(
-    args.transcript,
-    paths,
-    browserMetadata ?? undefined,
-    args.scoutResult,
-    args.browserContext
-  )
+  const hiddenContext = generateHiddenContext(args.transcript, paths)
 
   const promptDraft: PromptDraft = {
     title: "OpenVysta Compiled Prompt",

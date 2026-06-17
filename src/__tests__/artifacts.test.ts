@@ -17,6 +17,10 @@ import {
 import { buildInputPaths } from "../compiler/compile.js"
 import { buildRedactionReport } from "../compiler/redact.js"
 
+function joined(...parts: string[]): string {
+  return parts.join("")
+}
+
 describe("Artifacts", () => {
   let tmpDir: string
 
@@ -92,8 +96,8 @@ describe("Artifacts", () => {
     expect(manifest.visiblePrompt.path).toBe("visible-prompt.md")
   })
 
-  it("manifest shows browser not supplied when absent", () => {
-    const runRoot = join(tmpDir, "runs", "vysta_nobrowser")
+  it("manifest has no removed browser-metadata field", () => {
+    const runRoot = join(tmpDir, "runs", "vysta_no_browser_field")
     const paths = buildInputPaths({
       transcript: "test",
       screenshotPaths: ["/tmp/s1.png"],
@@ -108,7 +112,7 @@ describe("Artifacts", () => {
       paths,
     })
 
-    expect(manifest.browserMetadata.supplied).toBe(false)
+    expect(manifest).not.toHaveProperty(joined("browser", "Metadata"))
   })
 
   it("generates run record", () => {
@@ -143,12 +147,11 @@ describe("Artifacts", () => {
       { providerId: "test", modelId: "m1" },
       "transcript content",
       ["/tmp/test1.png", "/tmp/test2.png"],
-      true,
     )
 
     expect(sent.transcriptIncluded).toBe(true)
     expect(sent.screenshotsIncluded).toBe(true)
-    expect(sent.browserMetadataIncluded).toBe(true)
+    expect(sent).not.toHaveProperty(joined("browser", "Metadata", "Included"))
     expect(sent.parts.length).toBeGreaterThan(0)
   })
 

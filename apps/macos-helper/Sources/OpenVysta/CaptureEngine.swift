@@ -8,7 +8,6 @@ final class CaptureEngine: @unchecked Sendable {
     struct CompileRequest {
         let transcriptPath: String
         let screenshotPaths: [String]
-        let browserMetadataPath: String?
         let audioPath: String?
         let videoPath: String?
         let runDir: String
@@ -27,7 +26,6 @@ final class CaptureEngine: @unchecked Sendable {
         CompileRequest(
             transcriptPath: transcriptPath,
             screenshotPaths: screenshotPaths,
-            browserMetadataPath: nil,
             audioPath: audioPath,
             videoPath: videoPath,
             runDir: runDir,
@@ -257,7 +255,6 @@ final class CaptureEngine: @unchecked Sendable {
             audio: audioEntry,
             video: videoEntry,
             screenshots: screenshotEntries,
-            browserMetadata: BrowserEntry(path: nil, absolutePath: nil, supplied: false),
             hiddenContext: PathEntry(
                 path: "hidden-context.json",
                 absolutePath: store.runDir.appendingPathComponent("hidden-context.json").path
@@ -282,7 +279,6 @@ final class CaptureEngine: @unchecked Sendable {
         let output = await compilerBridge.compile(
             transcriptPath: request.transcriptPath,
             screenshotPaths: request.screenshotPaths,
-            browserMetadataPath: request.browserMetadataPath,
             audioPath: request.audioPath,
             videoPath: request.videoPath,
             runDir: request.runDir,

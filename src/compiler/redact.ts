@@ -32,23 +32,6 @@ export function scanText(text: string): { redacted: string; entries: RedactionEn
   return { redacted: result, entries }
 }
 
-export function scanBrowserMetadata(
-  metadata: Record<string, unknown>
-): { redacted: Record<string, unknown>; entries: RedactionEntry[] } {
-  const json = JSON.stringify(metadata)
-  const scan = scanText(json)
-  if (scan.entries.length === 0) {
-    return { redacted: metadata, entries: [] }
-  }
-
-  try {
-    const redactedMeta = JSON.parse(scan.redacted) as Record<string, unknown>
-    return { redacted: redactedMeta, entries: scan.entries }
-  } catch {
-    return { redacted: metadata, entries: scan.entries }
-  }
-}
-
 export function buildRedactionReport(
   runId: string,
   entries: RedactionEntry[]

@@ -23,6 +23,10 @@ import {
 } from "../compiler/artifacts.js"
 import { scanText, buildRedactionReport } from "../compiler/redact.js"
 
+function joined(...parts: string[]): string {
+  return parts.join("")
+}
+
 
 describe("Fixture E2E", () => {
   let tmpDir: string
@@ -43,14 +47,12 @@ describe("Fixture E2E", () => {
     expect(existsSync(join(fixtureDir, "transcript.md"))).toBe(true)
     expect(existsSync(join(fixtureDir, "screenshots", "1.png"))).toBe(true)
     expect(existsSync(join(fixtureDir, "screenshots", "2.png"))).toBe(true)
-    expect(existsSync(join(fixtureDir, "browser.json"))).toBe(true)
   })
 
   it("produces all required artifacts from fixture inputs", () => {
     const transcriptPath = join(fixtureDir, "transcript.md")
     const screenshot1 = join(fixtureDir, "screenshots", "1.png")
     const screenshot2 = join(fixtureDir, "screenshots", "2.png")
-    const browserPath = join(fixtureDir, "browser.json")
 
     const transcript = readFileSync(transcriptPath, "utf-8")
 
@@ -60,7 +62,6 @@ describe("Fixture E2E", () => {
     const compileArgs = {
       transcript,
       screenshotPaths: [screenshot1, screenshot2],
-      browserMetadataPath: browserPath,
       runRoot,
     }
 
@@ -75,7 +76,6 @@ describe("Fixture E2E", () => {
     stageAllArtifacts({
       transcriptPath,
       screenshotPaths: [screenshot1, screenshot2],
-      browserMetadataPath: browserPath,
       runRoot,
       runId,
       paths,
@@ -84,7 +84,6 @@ describe("Fixture E2E", () => {
     const manifest = generateArtifactManifest({
       transcriptPath,
       screenshotPaths: [screenshot1, screenshot2],
-      browserMetadataPath: browserPath,
       runRoot,
       runId,
       paths,
@@ -112,7 +111,6 @@ describe("Fixture E2E", () => {
       { providerId: "opencode", modelId: "test-model" },
       transcript,
       [screenshot1, screenshot2],
-      true,
     )
     writeJsonArtifact(runRoot, "sent-to-model.json", sentToModel)
     writeTextArtifact(
@@ -126,7 +124,6 @@ describe("Fixture E2E", () => {
       "inputs/transcript.md",
       "inputs/screenshots/1.png",
       "inputs/screenshots/2.png",
-      "inputs/browser.json",
       "artifact-manifest.md",
       "visible-prompt.md",
       "sent-to-model.json",
@@ -138,6 +135,9 @@ describe("Fixture E2E", () => {
       const fullPath = join(runRoot, f)
       expect(existsSync(fullPath)).toBe(true)
     }
+
+    // The run folder must NOT contain a browser metadata artifact
+    expect(existsSync(join(runRoot, "inputs", "browser.json"))).toBe(false)
 
     // Verify transcript was copied correctly
     const copiedTranscript = readFileSync(
@@ -155,13 +155,17 @@ describe("Fixture E2E", () => {
     expect(visiblePrompt).toContain("## Observed")
     expect(visiblePrompt).toContain("## Target")
     expect(visiblePrompt).not.toContain("## Artifacts")
+    expect(visiblePrompt).not.toContain("## Likely Targets")
   
-    // Verify hidden context has correct shape
+    // Verify hidden context has correct shape and no browser/scout fields
     const hiddenCtx = compileResult.promptDraft.hiddenContext
     expect(hiddenCtx.captureId).toBeDefined()
     expect(hiddenCtx.transcript).toBe(transcript)
     expect(Array.isArray(hiddenCtx.screenshots)).toBe(true)
     expect(hiddenCtx.screenshots).toHaveLength(2)
+    expect(hiddenCtx).not.toHaveProperty(joined("browser", "Metadata"))
+    expect(hiddenCtx).not.toHaveProperty(joined("browser", "Context"))
+    expect(hiddenCtx).not.toHaveProperty(joined("scout", "Result"))
 
     // Verify run.json
     const runData = JSON.parse(readFileSync(join(runRoot, "run.json"), "utf-8"))
@@ -182,6 +186,6 @@ describe("Fixture E2E", () => {
     )
     expect(sentData.transcriptIncluded).toBe(true)
     expect(sentData.screenshotsIncluded).toBe(true)
-    expect(sentData.browserMetadataIncluded).toBe(true)
+    expect(sentData).not.toHaveProperty(joined("browser", "Metadata", "Included"))
   })
 })

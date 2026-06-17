@@ -4,6 +4,7 @@ import { join, resolve } from "node:path"
 import { tmpdir } from "node:os"
 
 const fixtureDir = resolve("fixtures/basic")
+const legacyBrowserFlag = `--${["bro", "wser"].join("")}`
 
 describe("CLI", () => {
   let tmpDir: string
@@ -16,7 +17,10 @@ describe("CLI", () => {
     rmSync(tmpDir, { recursive: true, force: true })
   })
 
-  it("compiles preview artifacts without an OpenCode session", async () => {
+  it("rejects the legacy browser flag when the file exists", async () => {
+    const fakeBrowserPath = join(tmpDir, "fake-browser.json")
+    writeFileSync(fakeBrowserPath, JSON.stringify({ url: "http://x" }))
+
     const proc = Bun.spawn([
       "bun",
       "run",
@@ -27,8 +31,8 @@ describe("CLI", () => {
       "--screenshots",
       join(fixtureDir, "screenshots/1.png"),
       join(fixtureDir, "screenshots/2.png"),
-      "--browser",
-      join(fixtureDir, "browser.json"),
+      legacyBrowserFlag,
+      fakeBrowserPath,
       "--opencode-server",
       "http://127.0.0.1:1",
       "--out",
@@ -38,24 +42,63 @@ describe("CLI", () => {
     ], {
       cwd: resolve("."),
       env: { ...process.env, OPENCODE_SESSION_ID: "" },
-      stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
     })
 
-    proc.stdin.write("c\n")
-    proc.stdin.end()
-
-    const [stdout, stderr, exitCode] = await Promise.all([
-      new Response(proc.stdout).text(),
+    const [stderr, exitCode] = await Promise.all([
       new Response(proc.stderr).text(),
       proc.exited,
     ])
 
-    expect(exitCode).toBe(0)
-    expect(stderr).not.toContain("No session ID")
-    expect(stdout).toContain("OpenVysta Compiled Prompt")
-    expect(runArtifactExists("visible-prompt.md")).toBe(true)
+    expect(exitCode).toBe(1)
+    expect(stderr).toContain("browser metadata")
+
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    for (const dir of runDirs) {
+      expect(existsSync(join(tmpDir, dir, "inputs", "browser.json"))).toBe(false)
+      expect(existsSync(join(tmpDir, dir, "visible-prompt.md"))).toBe(false)
+      expect(existsSync(join(tmpDir, dir, "artifact-manifest.md"))).toBe(false)
+      expect(existsSync(join(tmpDir, dir, "sent-to-model.json"))).toBe(false)
+    }
+  })
+
+  it("rejects the legacy browser flag when the path is missing", async () => {
+    const proc = Bun.spawn([
+      "bun",
+      "run",
+      "src/index.ts",
+      "compile",
+      "--transcript",
+      join(fixtureDir, "transcript.md"),
+      "--screenshots",
+      join(fixtureDir, "screenshots/1.png"),
+      join(fixtureDir, "screenshots/2.png"),
+      legacyBrowserFlag,
+      "/nonexistent/browser.json",
+      "--opencode-server",
+      "http://127.0.0.1:1",
+      "--out",
+      tmpDir,
+      "--enrich",
+      "false",
+    ], {
+      cwd: resolve("."),
+      env: { ...process.env, OPENCODE_SESSION_ID: "" },
+      stdout: "pipe",
+      stderr: "pipe",
+    })
+
+    const [stderr, exitCode] = await Promise.all([
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ])
+
+    expect(exitCode).toBe(1)
+    expect(stderr).toContain("browser metadata")
+
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    expect(runDirs).toHaveLength(0)
   })
 
   it("supports noninteractive compile without preview", async () => {

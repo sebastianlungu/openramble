@@ -20,40 +20,6 @@ export type SelectedFrame = {
   reason: "start" | "pointer_pause" | "speech_deixis" | "visual_change" | "click" | "end" | "baseline"
 }
 
-export type ElementContext = {
-  tagName?: string
-  id?: string
-  className?: string
-  textContent?: string
-  ariaLabel?: string
-  boundingRect?: { x: number; y: number; width: number; height: number }
-}
-
-export type BrowserContext = {
-  url?: string
-  title?: string
-  route?: string
-  viewport?: { width: number; height: number }
-  elementUnderCursor?: ElementContext
-  accessibilitySnapshot?: string
-  consoleMessages?: string[]
-  pageErrors?: string[]
-  networkFailures?: string[]
-}
-
-export type ScoutHypothesis = {
-  name?: string
-  path?: string
-  confidence: "low" | "medium" | "high"
-  reason: string
-}
-
-export type ScoutResult = {
-  likelyFiles: ScoutHypothesis[]
-  likelyComponents: ScoutHypothesis[]
-  assumptions: string[]
-}
-
 export type PromptDraft = {
   title: string
   visiblePrompt: string
@@ -65,7 +31,6 @@ export type InputPaths = {
   transcriptRel: string
   transcriptAbs: string
   screenshots: { rel: string; abs: string }[]
-  browser?: { rel: string; abs: string }
   audio?: { rel: string; abs: string }
   video?: { rel: string; abs: string }
   hiddenCtxRel: string
@@ -97,7 +62,6 @@ export type ArtifactManifest = {
   audio?: { original: string; supplied: boolean }
   video?: { original: string; supplied: boolean }
   screenshots: ArtifactManifestEntry[]
-  browserMetadata: { path?: string; absolutePath?: string; supplied: boolean }
   hiddenContext: { path: string; absolutePath: string }
   visiblePrompt: { path: string; absolutePath: string }
 }
@@ -121,7 +85,6 @@ export type SentToModel = {
   totalBytes: number
   transcriptIncluded: boolean
   screenshotsIncluded: boolean
-  browserMetadataIncluded: boolean
 }
 
 export type RedactionEntry = {

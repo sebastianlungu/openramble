@@ -52,8 +52,8 @@ Current as of 2026-06-12. Update this table when fixes land so agents do not opt
 | 3 | Critical | Screenshot timing and cursor coverage gaps are reported but not acted on. | Warning text is not enough; the product must choose better frames or lower confidence. | Missing coverage must trigger re-extraction, clarification, or a visibly low-confidence handoff. |
 | 4 | Critical | The prompt is too safe and too vague. | Safety language without extracted facts creates a bureaucratic prompt that still makes the coding agent guess. | Lead with concrete observed UI structure, then constraints and uncertainty. |
 | 5 | High | No quality gate for "I understood the screen." | Evals can pass on easy text tasks while the core visual product rots. | Score each run for visual specificity, target alignment, uncertainty honesty, and implementation usefulness. |
-| 6 | High | Model capability mismatch is tolerated. | Local screenshot paths do not give image understanding to a text-only model. Pretending otherwise is product gaslighting. | If no image-capable path exists, use a dedicated vision step, browser context, human clarification, or block. |
-| 7 | High | Browser context is optional but not treated as a precision multiplier. | For web UI, DOM/accessibility/route data can remove ambiguity cheaply. | Prefer explicit user-gesture capture of active-tab context when available. |
+| 6 | High | Model capability mismatch is tolerated. | Local screenshot paths do not give image understanding to a text-only model. Pretending otherwise is product gaslighting. | If no image-capable path exists, use a dedicated vision step, human clarification, or block. |
+| 7 | High | Weak screenshot/cursor alignment is tolerated. | Requests like "make this like here" fail if target grounding stays loose even when frames exist. | Prefer stronger frame selection, cursor alignment, and explicit low-confidence handoff over vague output. |
 | 8 | Medium | Artifact manifests are treated as enough. | Artifacts preserve replayability, but users pay for interpretation, not storage. | Keep artifacts as audit links, not visible prompt filler. |
 | 9 | Medium | Acceptance criteria are generic. | "Matches requested behavior" cannot catch visual misunderstanding. | Acceptance must name the target screen, copied structure, adapted labels, and visual parity expectations. |
 | 10 | Medium | Product language is not ruthless enough. | Agents optimize for plausible completion unless told that vague outputs are failures. | Reject prompts that do not materially reduce ambiguity for the implementation agent. |
@@ -66,7 +66,7 @@ For each frame, capture:
 
 - Timestamp or ordering.
 - Frame reason, such as start, pointer pause, speech deixis, click, visual change, or end.
-- Active app/window/browser route when available.
+- Active app/window when available.
 - Primary visible screen or panel.
 - Visible headings, tabs, nav items, buttons, form fields, labels, and metrics.
 - Layout structure, such as sidebar, header, cards, table, chart, empty state, modal, or split pane.
@@ -79,7 +79,6 @@ If the current model cannot see the screenshots, do not pretend. Use one of thes
 | Path | When To Use | Required Output |
 | --- | --- | --- |
 | Vision-capable enrichment | Image input is available. | A concise visual inventory and target map. |
-| Browser/DOM enrichment | The target is a browser tab and active-tab context exists. | Route, title, DOM/accessibility summary, element under cursor, viewport, console/page/network issues. |
 | Human clarification | The visual target cannot be resolved from available evidence. | One short question with the most likely interpretations. |
 | Low-confidence handoff | User explicitly wants to proceed despite weak evidence. | Prominent low-confidence warning and exact missing evidence. |
 
@@ -151,7 +150,7 @@ Use these principles when designing OpenVysta features, especially capture, prev
 | User control and freedom | Always support Retry, Cancel, and manual clarification before sending. Auto-submit must stay opt-in. |
 | Aesthetic minimalism | The capture overlay should be nearly invisible. The prompt preview should show only the evidence and choices needed to trust/send. |
 | Error prevention | Prevent hallucinated handoffs by blocking when visual evidence is inaccessible or target alignment fails. |
-| Privacy by gesture | Collect browser/page context only in response to explicit user invocation, and keep access scoped to the active tab/session. |
+| Privacy by gesture | Collect only the evidence required for the current capture, and keep sensitive artifacts local by default. |
 | Accessible controls | Interactive controls should meet at least WCAG 2.2 target-size minimums and have clear labels. |
 
 ## OpenCode And Agent Usage
@@ -185,7 +184,6 @@ Use primary or near-primary sources when changing product rules:
 
 - OpenCode agents docs confirm project agents, permissions, plan/build separation, and subagent workflows: https://opencode.ai/docs/agents
 - NN/g usability heuristics support visibility of system status, recognition over recall, user control, minimalist design, and error prevention: https://www.nngroup.com/articles/ten-usability-heuristics/
-- Chrome `activeTab` docs support temporary active-tab access triggered by explicit user gestures, matching OpenVysta's privacy model: https://developer.chrome.com/docs/extensions/develop/concepts/activeTab
 - WCAG 2.2 target-size guidance sets a minimum bar for pointer/touch controls: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
 
 Research date for this guidance: 2026-06-12.

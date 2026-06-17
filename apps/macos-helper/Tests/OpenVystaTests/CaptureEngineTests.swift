@@ -37,6 +37,37 @@ struct CaptureEngineTests {
         #expect(!request.autoSend)
     }
 
+    @Test func artifactManifestEncodingOmitsLegacyBrowserField() throws {
+        let manifest = ArtifactManifest(
+            runId: "vysta_test",
+            rootPath: "/tmp/vysta_test",
+            createdAt: "2026-06-16T00:00:00Z",
+            transcript: ArtifactEntry(
+                name: "transcript.md",
+                relativePath: "inputs/transcript.md",
+                absolutePath: "/tmp/vysta_test/inputs/transcript.md",
+                mimeType: "text/markdown",
+                supplied: true
+            ),
+            audio: nil,
+            video: nil,
+            screenshots: [],
+            hiddenContext: PathEntry(
+                path: "hidden-context.json",
+                absolutePath: "/tmp/vysta_test/hidden-context.json"
+            ),
+            visiblePrompt: PathEntry(
+                path: "visible-prompt.md",
+                absolutePath: "/tmp/vysta_test/visible-prompt.md"
+            )
+        )
+
+        let data = try JSONEncoder().encode(manifest)
+        let json = try #require(String(data: data, encoding: .utf8))
+
+        #expect(!json.contains("browserMetadata"))
+    }
+
     @MainActor @Test func completeStateCopiesToClipboard() {
         let unique = "test-\(UUID().uuidString)"
         NSPasteboard.general.clearContents()
@@ -324,7 +355,6 @@ final class MockCompilerBridge: CompilerBridgeProtocol, @unchecked Sendable {
     func compile(
         transcriptPath: String,
         screenshotPaths: [String],
-        browserMetadataPath: String?,
         audioPath: String?,
         videoPath: String?,
         runDir: String,
