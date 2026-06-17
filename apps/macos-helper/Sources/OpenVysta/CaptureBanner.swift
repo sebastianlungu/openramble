@@ -7,18 +7,24 @@ final class CaptureBannerModel: @unchecked Sendable {
         didSet {
             guard stateKind(oldValue) != stateKind(state) else { return }
             stateChangedAt = Date()
+            if isActiveKind(state), !isActiveKind(oldValue) { entranceTrigger = Date() }
         }
     }
     var isExpanded = false
     var stateChangedAt: Date = Date()
+    var entranceTrigger: Date = Date()
 
-    private func stateKind(_ s: CaptureBannerState) -> Int {
+    fileprivate func stateKind(_ s: CaptureBannerState) -> Int {
         switch s {
         case .recording: return 0
         case .processing: return 1
         case .done: return 2
         case .error: return 3
         }
+    }
+
+    private func isActiveKind(_ s: CaptureBannerState) -> Bool {
+        switch s { case .recording, .processing: return true; default: return false }
     }
 
     var promptText: String {
@@ -50,9 +56,8 @@ struct CaptureBannerView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: model.isExpanded)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .compositingGroup()
+        .geometryGroup().animation(.easeInOut(duration: 0.2), value: model.isExpanded)
+        .clipShape(RoundedRectangle(cornerRadius: 10)).compositingGroup()
         .shadow(color: .black.opacity(0.3), radius: 8)
     }
 
@@ -65,15 +70,15 @@ struct CaptureBannerView: View {
             case .recording(let elapsed), .processing(let elapsed):
                 Text(labelForActiveState)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.white).transition(.blurReplace)
                 Text(Self.elapsedDisplay(seconds: elapsed))
                     .font(.system(size: 12, weight: .regular, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.8)).contentTransition(.numericText())
                 Spacer()
             case .done:
                 Text("Done")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.white).transition(.blurReplace)
                 copiedBadge
                 Spacer()
                 expandChevron
@@ -82,7 +87,7 @@ struct CaptureBannerView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.red)
                     .lineLimit(2)
-                    .truncationMode(.tail)
+                    .truncationMode(.tail).transition(.opacity.combined(with: .move(edge: .leading)))
                 Spacer()
                 expandChevron
             }
@@ -90,7 +95,6 @@ struct CaptureBannerView: View {
         .frame(height: 40)
         .padding(.horizontal, 14)
         .background(bannerBackground)
-        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: model.stateChangedAt)
     }
 
     private var labelForActiveState: String {
@@ -112,16 +116,16 @@ struct CaptureBannerView: View {
 
     @ViewBuilder
     private func statusContent(t: TimeInterval, stateT: TimeInterval) -> some View {
+        let entranceT = max(0, t - model.entranceTrigger.timeIntervalSince1970)
         ZStack {
             PulseDot(
                 speed: isProcessing ? 0.85 : 1.4,
                 baseOpacity: isProcessing ? 0.4 : 0.55,
                 amplitude: isProcessing ? 0.6 : 0.45,
                 t: t,
-                stateT: stateT
+                entranceT: entranceT
             )
-            .foregroundStyle(pulseColor)
-            .animation(.easeInOut(duration: 0.25), value: stateKind)
+            .foregroundStyle(pulseColor).animation(.easeInOut(duration: 0.25), value: stateKind)
 
             switch model.state {
             case .recording, .processing:
@@ -134,7 +138,6 @@ struct CaptureBannerView: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.78), value: stateKind)
     }
 
     private var isProcessing: Bool {
@@ -150,14 +153,7 @@ struct CaptureBannerView: View {
         }
     }
 
-    private var stateKind: Int {
-        switch model.state {
-        case .recording: return 0
-        case .processing: return 1
-        case .done: return 2
-        case .error: return 3
-        }
-    }
+    private var stateKind: Int { model.stateKind(model.state) }
 
     @ViewBuilder
     private var bannerBackground: some View {
@@ -194,6 +190,7 @@ struct CaptureBannerView: View {
             .foregroundColor(.white.opacity(0.6))
             .rotationEffect(.degrees(model.isExpanded ? 180 : 0))
             .animation(.easeInOut(duration: 0.2), value: model.isExpanded)
+            .transition(.opacity)
     }
 
     @ViewBuilder
@@ -206,6 +203,7 @@ struct CaptureBannerView: View {
                 .font(.system(size: 10))
                 .foregroundColor(.white.opacity(opacity))
         }
+        .transition(.move(edge: .trailing).combined(with: .opacity))
     }
 }
 
@@ -214,12 +212,12 @@ struct PulseDot: View {
     let baseOpacity: Double
     let amplitude: Double
     let t: TimeInterval
-    let stateT: TimeInterval
+    let entranceT: TimeInterval
 
     private let entranceDuration: TimeInterval = 0.32
 
     private var entranceScale: Double {
-        let progress = min(1.0, stateT / entranceDuration)
+        let progress = min(1.0, entranceT / entranceDuration)
         if progress < 0.5 {
             return 0.6 + 0.8 * (progress / 0.5)
         }
@@ -230,7 +228,7 @@ struct PulseDot: View {
         let phase = t * .pi * 2 / speed
         let pulse = baseOpacity + amplitude * (0.5 + 0.5 * sin(phase))
         let breathScale = 1.0 + 0.08 * sin(phase)
-        let scale = stateT < entranceDuration ? entranceScale : breathScale
+        let scale = entranceT < entranceDuration ? entranceScale : breathScale
         Circle()
             .frame(width: 8, height: 8)
             .scaleEffect(scale)
@@ -326,7 +324,8 @@ final class CaptureBanner: @unchecked Sendable {
             guard let self else { return }
             self.invalidateTimer()
             self.removeClickOutsideMonitor()
-            self.model.state = .processing(elapsed: 0)
+            let carried: Int = if case .recording(let e) = self.model.state { e } else { 0 }
+            withAnimation(.easeInOut(duration: 0.25)) { self.model.state = .processing(elapsed: max(1, carried)) }
             self.model.isExpanded = false
             self.startTimer()
             self.window?.ignoresMouseEvents = true
@@ -337,7 +336,9 @@ final class CaptureBanner: @unchecked Sendable {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.invalidateTimer()
-            self.model.state = .done(promptText: promptText)
+            withAnimation(.easeInOut(duration: 0.25)) {
+                self.model.state = .done(promptText: promptText)
+            }
             self.model.isExpanded = false
             self.window?.ignoresMouseEvents = false
             self.installClickOutsideMonitor()
@@ -349,7 +350,9 @@ final class CaptureBanner: @unchecked Sendable {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.invalidateTimer()
-            self.model.state = .error(message)
+            withAnimation(.easeInOut(duration: 0.25)) {
+                self.model.state = .error(message)
+            }
             self.model.isExpanded = false
             self.window?.ignoresMouseEvents = false
             self.installClickOutsideMonitor()
@@ -412,10 +415,10 @@ final class CaptureBanner: @unchecked Sendable {
         let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                if case .recording(let elapsed) = self.model.state {
-                    self.model.state = .recording(elapsed: elapsed + 1)
-                } else if case .processing(let elapsed) = self.model.state {
-                    self.model.state = .processing(elapsed: elapsed + 1)
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    let s = self.model.state
+                    if case .recording(let e) = s { self.model.state = .recording(elapsed: e + 1) }
+                    else if case .processing(let e) = s { self.model.state = .processing(elapsed: e + 1) }
                 }
             }
         }
@@ -460,15 +463,15 @@ final class CaptureBanner: @unchecked Sendable {
         }
     }
 
+    @MainActor
     private func installClickOutsideMonitor() {
         removeClickOutsideMonitor()
+        var fired = false
+        let fire: () -> Void = { [weak self] in if let self, !fired { fired = true; self.onDismiss?() } }
         localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self, let window = self.window else { return event }
             if event.window !== window {
-                DispatchQueue.main.async { [weak self] in
-                    self?.onDismiss?()
-                    self?.hide()
-                }
+                DispatchQueue.main.async { fire() }
             } else {
                 DispatchQueue.main.async { [weak self] in
                     self?.onBannerClick?()
@@ -476,14 +479,12 @@ final class CaptureBanner: @unchecked Sendable {
             }
             return event
         }
-        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            DispatchQueue.main.async { [weak self] in
-                self?.onDismiss?()
-                self?.hide()
-            }
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { _ in
+            DispatchQueue.main.async { fire() }
         }
     }
 
+    @MainActor
     private func removeClickOutsideMonitor() {
         if let monitor = localClickMonitor {
             NSEvent.removeMonitor(monitor)
