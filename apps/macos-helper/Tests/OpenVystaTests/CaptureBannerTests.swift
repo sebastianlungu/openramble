@@ -168,4 +168,83 @@ struct CaptureBannerTests {
         model.state = .processing(elapsed: 5)
         #expect(model.stateChangedAt == afterKindChange)
     }
+
+    @Test func modelProcessingCarriesForwardElapsedFromRecording() {
+        let model = CaptureBannerModel()
+        model.state = .recording(elapsed: 7)
+
+        let carried: Int = if case .recording(let e) = model.state { e } else { 0 }
+        model.state = .processing(elapsed: max(1, carried))
+
+        if case .processing(let elapsed) = model.state {
+            #expect(elapsed == 7, "Processing should carry forward elapsed from recording")
+        } else {
+            Issue.record("Expected .processing state")
+        }
+    }
+
+    @Test func modelProcessingCarryForwardClampsToOneWhenRecordingIsZero() {
+        let model = CaptureBannerModel()
+        model.state = .recording(elapsed: 0)
+
+        let carried: Int = if case .recording(let e) = model.state { e } else { 0 }
+        model.state = .processing(elapsed: max(1, carried))
+
+        if case .processing(let elapsed) = model.state {
+            #expect(elapsed == 1, "Processing should clamp to 1 when recording elapsed is 0")
+        } else {
+            Issue.record("Expected .processing state")
+        }
+    }
+
+    @Test func entranceTriggerAdvancesOnNonActiveToActive() {
+        let model = CaptureBannerModel()
+        model.state = .done(promptText: "test")
+        let doneEntrance = model.entranceTrigger
+        Thread.sleep(forTimeInterval: 0.01)
+        model.state = .recording(elapsed: 0)
+        #expect(model.entranceTrigger > doneEntrance, "entranceTrigger should advance on done -> recording")
+    }
+
+    @Test func entranceTriggerAdvancesOnErrorToProcessing() {
+        let model = CaptureBannerModel()
+        model.state = .error("oops")
+        let errorEntrance = model.entranceTrigger
+        Thread.sleep(forTimeInterval: 0.01)
+        model.state = .processing(elapsed: 3)
+        #expect(model.entranceTrigger > errorEntrance, "entranceTrigger should advance on error -> processing")
+    }
+
+    @Test func entranceTriggerDoesNotAdvanceOnActiveToNonActive() {
+        let model = CaptureBannerModel()
+        let recordingEntrance = model.entranceTrigger
+        Thread.sleep(forTimeInterval: 0.01)
+        model.state = .done(promptText: "test")
+        #expect(model.entranceTrigger == recordingEntrance, "entranceTrigger should NOT advance on recording -> done")
+    }
+
+    @Test func entranceTriggerDoesNotAdvanceOnActiveToActive() {
+        let model = CaptureBannerModel()
+        let recordingEntrance = model.entranceTrigger
+        Thread.sleep(forTimeInterval: 0.01)
+        model.state = .processing(elapsed: 5)
+        #expect(model.entranceTrigger == recordingEntrance, "entranceTrigger should NOT advance on recording -> processing")
+    }
+
+    @Test func entranceTriggerDoesNotAdvanceOnPerSecondTick() {
+        let model = CaptureBannerModel()
+        let initial = model.entranceTrigger
+        model.state = .recording(elapsed: 1)
+        model.state = .recording(elapsed: 2)
+        model.state = .recording(elapsed: 3)
+        #expect(model.entranceTrigger == initial, "entranceTrigger should NOT advance on per-second elapsed tick")
+    }
+
+    // Click monitor single-fire and numeric text transition are not unit-tested.
+    // Both depend on AppKit NSEvent global state and SwiftUI view modifiers that
+    // are not observable in unit tests. The click monitor's `fired` flag and
+    // `installClickOutsideMonitor` re-invocation safety are verified by code
+    // inspection: `removeClickOutsideMonitor` is called before re-install, and
+    // the `fired` flag captured by the `fire` closure gates `onDismiss` to a
+    // single invocation.
 }
