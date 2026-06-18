@@ -284,7 +284,8 @@ final class CaptureEngine: @unchecked Sendable {
             runDir: request.runDir,
             sessionId: request.sessionId,
             autoSend: request.autoSend,
-            enrich: request.enrich
+            enrich: request.enrich,
+            timeout: nil
         )
 
         await MainActor.run {
