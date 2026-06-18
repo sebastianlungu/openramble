@@ -351,6 +351,7 @@ final class MockCompilerBridge: CompilerBridgeProtocol, @unchecked Sendable {
     var compileResult = CompilerOutput(promptDraft: nil, errors: [], warnings: [])
 
     var lastCompileEnrich: Bool?
+    var lastCompileTimeout: Duration?
 
     func compile(
         transcriptPath: String,
@@ -360,9 +361,11 @@ final class MockCompilerBridge: CompilerBridgeProtocol, @unchecked Sendable {
         runDir: String,
         sessionId: String?,
         autoSend: Bool,
-        enrich: Bool
+        enrich: Bool,
+        timeout: Duration?
     ) async -> CompilerOutput {
         lastCompileEnrich = enrich
+        lastCompileTimeout = timeout
         return compileResult
     }
 
@@ -370,7 +373,8 @@ final class MockCompilerBridge: CompilerBridgeProtocol, @unchecked Sendable {
         promptFilePath: String,
         hiddenContextFilePath: String?,
         runDir: String,
-        sessionId: String?
+        sessionId: String?,
+        timeout: Duration?
     ) async -> CompilerOutput {
         return CompilerOutput(promptDraft: nil, errors: [], warnings: [])
     }

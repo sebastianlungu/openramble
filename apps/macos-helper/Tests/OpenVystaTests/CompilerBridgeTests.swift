@@ -9,11 +9,19 @@ final class MockProcessRunner: ProcessRunner, @unchecked Sendable {
     var stderrData: Data = Data()
     var writeCustomHiddenContext = true
     var events: [String] = []
+    var delay: Duration = .zero
+    var hangForever: Bool = false
 
-    func run(_ process: Process) throws -> ProcessResult {
+    func run(_ process: Process) async throws -> ProcessResult {
         events.append("run")
         lastArgs = process.arguments ?? []
         lastExecutableURL = process.executableURL
+
+        if hangForever {
+            try? await Task.sleep(for: .seconds(3600))
+        } else if delay > .zero {
+            try? await Task.sleep(for: delay)
+        }
 
         // Write a minimal visible-prompt.md to out dir if process would succeed
         if terminationStatus == 0, let args = process.arguments,
@@ -547,5 +555,190 @@ struct CompilerBridgeTests {
             .children
             .first { $0.label == "environment" }?
             .value as? [String: String]
+    }
+
+    // MARK: - Compile process timeout
+
+    @Test func boundedRunnerReturnsInnerResultWhenInnerCompletesBeforeDeadline() async throws {
+        let inner = MockProcessRunner()
+        let bounded = BoundedProcessRunner(inner: inner, timeout: .seconds(5))
+        let process = Process()
+
+        let start = ContinuousClock().now
+        let result = try await bounded.run(process)
+        let elapsed = ContinuousClock().now - start
+
+        #expect(result.didTimeOut == false)
+        #expect(result.result.terminationStatus == 0)
+        #expect(elapsed < .seconds(1), "Fast inner should return quickly, took \(elapsed)")
+    }
+
+    @Test func boundedRunnerTerminatesAndFlagsTimeoutWhenInnerHangsPastDeadline() async throws {
+        let inner = MockProcessRunner()
+        inner.hangForever = true
+        let bounded = BoundedProcessRunner(
+            inner: inner,
+            timeout: .milliseconds(100),
+            gracePeriod: .milliseconds(200)
+        )
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        process.arguments = ["10"]
+        try? process.run()
+
+        let start = ContinuousClock().now
+        let result = try await bounded.run(process)
+        let elapsed = ContinuousClock().now - start
+
+        #expect(result.didTimeOut == true)
+        #expect(elapsed < .seconds(2), "Timeout + grace should fire within ~300ms, took \(elapsed)")
+        #expect(!process.isRunning, "Process should be terminated after timeout")
+    }
+
+    @Test func boundedRunnerPreservesTimeoutFlagEvenWhenInnerCompletesAfterTerminate() async throws {
+        // Race scenario: the inner uses DefaultProcessRunner (real Process
+        // with terminationHandler) and exits quickly on SIGTERM. The
+        // timeout task fires first, sets the flag, and sends SIGTERM.
+        // The inner then completes via the terminationHandler. The
+        // bounded result must report didTimeOut == true and include the
+        // inner's stderr, not the inner's clean-exit code path.
+        let inner = DefaultProcessRunner()
+        let bounded = BoundedProcessRunner(
+            inner: inner,
+            timeout: .milliseconds(50),
+            gracePeriod: .milliseconds(500)
+        )
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "echo 'partial stderr output before kill' >&2; sleep 10"]
+
+        let start = ContinuousClock().now
+        let result = try await bounded.run(process)
+        let elapsed = ContinuousClock().now - start
+
+        #expect(result.didTimeOut == true, "Inner completed after terminate must still flag timeout")
+        #expect(elapsed < .seconds(2), "Should return within timeout + grace, took \(elapsed)")
+        #expect(!process.isRunning)
+        let stderr = String(data: result.result.stderrData, encoding: .utf8) ?? ""
+        #expect(stderr.contains("partial stderr output before kill"),
+                "Stderr should be preserved on timeout, got: \(stderr)")
+    }
+
+    @Test func boundedRunnerTerminatesProcessOnOuterCancellation() async throws {
+        let inner = MockProcessRunner()
+        inner.hangForever = true
+        let bounded = BoundedProcessRunner(
+            inner: inner,
+            timeout: .seconds(5),
+            gracePeriod: .milliseconds(500)
+        )
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 10"]
+
+        let runnerTask = Task {
+            try await bounded.run(process)
+        }
+        try await Task.sleep(for: .milliseconds(50))
+        runnerTask.cancel()
+
+        _ = try? await runnerTask.value
+        #expect(!process.isRunning, "Outer cancellation should terminate the process")
+    }
+
+    @Test func compileReturnsTimeoutErrorWhenSubprocessExceedsDeadline() async throws {
+        let mock = MockProcessRunner()
+        mock.hangForever = true
+        let serverManager = MockOpenCodeServerManager()
+        let bridge = CompilerBridge(
+            processRunner: mock,
+            serverManager: serverManager,
+            timeout: .milliseconds(100)
+        )
+
+        let outDir = tempRoot.appendingPathComponent("compile-timeout-out")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let output = await bridge.compile(
+            transcriptPath: "/tmp/transcript.md",
+            screenshotPaths: ["/tmp/1.png"],
+            audioPath: nil,
+            videoPath: nil,
+            runDir: outDir.path,
+            sessionId: nil,
+            autoSend: false,
+            enrich: false,
+            timeout: nil
+        )
+
+        #expect(output.promptDraft == nil)
+        #expect(output.errors.count == 1)
+        #expect(output.errors[0].hasPrefix("Compile timed out after"))
+    }
+
+    @Test func compileTimeoutOverrideBeatsBridgeDefault() async throws {
+        let mock = MockProcessRunner()
+        mock.hangForever = true
+        let serverManager = MockOpenCodeServerManager()
+        let bridge = CompilerBridge(
+            processRunner: mock,
+            serverManager: serverManager,
+            timeout: .seconds(180)
+        )
+
+        let outDir = tempRoot.appendingPathComponent("compile-timeout-override-out")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let start = ContinuousClock().now
+        let output = await bridge.compile(
+            transcriptPath: "/tmp/transcript.md",
+            screenshotPaths: ["/tmp/1.png"],
+            audioPath: nil,
+            videoPath: nil,
+            runDir: outDir.path,
+            sessionId: nil,
+            autoSend: false,
+            enrich: false,
+            timeout: .milliseconds(50)
+        )
+        let elapsed = ContinuousClock().now - start
+
+        #expect(output.promptDraft == nil)
+        #expect(output.errors.count == 1)
+        #expect(output.errors[0].hasPrefix("Compile timed out after"))
+        #expect(elapsed < .seconds(1), "Override timeout of 50ms should fire quickly, took \(elapsed)")
+    }
+
+    @Test func appendPromptTimeoutSurfacesAsCompilerError() async throws {
+        let mock = MockProcessRunner()
+        mock.hangForever = true
+        let serverManager = MockOpenCodeServerManager()
+        let bridge = CompilerBridge(
+            processRunner: mock,
+            serverManager: serverManager,
+            timeout: .milliseconds(100)
+        )
+
+        try FileManager.default.createDirectory(at: tempRoot, withIntermediateDirectories: true)
+        let promptFile = tempRoot.appendingPathComponent("append-timeout-prompt.md")
+        try "# Prompt".write(to: promptFile, atomically: true, encoding: .utf8)
+        let outDir = tempRoot.appendingPathComponent("append-timeout-out")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let output = await bridge.appendPrompt(
+            promptFilePath: promptFile.path,
+            hiddenContextFilePath: nil,
+            runDir: outDir.path,
+            sessionId: nil,
+            timeout: nil
+        )
+
+        #expect(output.promptDraft == nil)
+        #expect(output.errors.count == 1)
+        #expect(output.errors[0].hasPrefix("Compile timed out after"))
+    }
+
+    @Test func defaultCompileTimeoutIsThreeMinutes() {
+        #expect(CompilerBridge.defaultCompileTimeout == .seconds(180))
     }
 }
