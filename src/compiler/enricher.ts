@@ -42,16 +42,36 @@ Rules:
 - Use the timeline entries to understand what the user was looking at and pointing at when they said each thing.
 - Preserve uncertainty explicitly.
 - If the transcript is ambiguous, state assumptions and questions instead of inventing facts.
+- The Intent line MUST be a tight paraphrase of the spoken intent. Do NOT introduce softening phrases the user did not say, such as "or a close equivalent", "or a close equivalent of it", "based on the visible", "based on the visible layout", "appears to", or "seems to".
+- Capture-pipeline UI (a "recording pill", "capture banner", "capture pill", or "floating banner") MUST NOT appear in any section of the visible prompt. It is not part of the target screen.
 
 Output exactly this compact structure:
 
-Intent: [What the user asked for, in one sentence.]
+Intent: [What the user asked for, paraphrased tightly from the spoken intent. Do not add hedges the user did not say.]
 
-Observed: [Concrete visible UI/source facts that matter: layout, labels, controls, state, style. If the screen is blank, black, or otherwise low-information, say that directly and note that no visible UI is discernible.]
+Observed: [Concrete visible UI/source facts that matter. Cover at minimum:
+  Layout: named regions and primary geometry (e.g. "two-pane: ~75% main / ~25% right sidebar, full-height").
+  Controls: visible buttons, inputs, toggles, menus, with labels where legible.
+  Content: visible text, status, metrics (no more than the user would care about).
+  Style tokens (read these from the frame — do not invent):
+    theme: light | dark | mixed
+    background: short description or hex if clearly discernible
+    text: short description or hex
+    font feel: monospace | sans-serif | serif | mixed
+    density: sparse | comfortable | dense
+    accent: short description or hex, or "none visible"
+    borders: hairline | 1px | heavier; muted | bright
+  If a token cannot be read, write "not discernible" — do not invent a value. If the screen is blank, black, or otherwise low-information, say that directly and note that no visible UI is discernible.]
 
 Target: [What "this/here/same" refers to, with confidence and any missing alignment.]
 
-Do: [Specific implementation request adapted to the user's app.]
+Do:
+  Mirror (structure to copy from the captured UI):
+    - <named structural element 1>
+    - <named structural element 2>
+  Adapt (changes required for the user's app):
+    - <label or content change 1>
+    - <label or content change 2>
 
 Acceptance:
 - [ ] [Observable check specific to this capture]
@@ -166,17 +186,21 @@ function assertEnrichedPromptQuality(text: string): void {
   }
 
   const lower = text.toLowerCase()
-  const forbidden = [
+  const globalForbidden = [
     "inspect the screenshot",
     "inspect screenshots",
     "cannot view",
     "can't view",
     "unable to view",
     "screenshot paths",
+    "recording pill",
+    "capture banner",
+    "capture pill",
+    "floating banner",
   ]
-  const forbiddenHit = forbidden.find((phrase) => lower.includes(phrase))
-  if (forbiddenHit) {
-    throw new Error(`Enrichment failed quality gate: ${forbiddenHit}`)
+  const globalHit = globalForbidden.find((phrase) => lower.includes(phrase))
+  if (globalHit) {
+    throw new Error(`Enrichment failed quality gate: ${globalHit}`)
   }
 
   const observed = readSection(text, "Observed", "Target")
@@ -190,6 +214,31 @@ function assertEnrichedPromptQuality(text: string): void {
     assertLowInformationSections(target, implementation)
     return
   }
+
+  const intentSection = readSection(text, "Intent", "Observed")
+  const doSection = readSection(text, "Do", "Acceptance")
+  const hedgeForbidden = [
+    "or a close equivalent",
+    "based on the visible",
+  ]
+  for (const section of [intentSection, observed, doSection]) {
+    const sectionLower = section.toLowerCase()
+    const hit = hedgeForbidden.find((phrase) => sectionLower.includes(phrase))
+    if (hit) {
+      throw new Error(`Enrichment failed quality gate: ${hit}`)
+    }
+  }
+
+  const styleTokens = [
+    "theme:", "background:", "text:", "font feel:",
+    "density:", "accent:", "borders:",
+  ]
+  const tokenHits = styleTokens.filter((token) => observed.toLowerCase().includes(token))
+  if (tokenHits.length < 3) {
+    throw new Error("Enrichment failed quality gate: Observed section missing style tokens")
+  }
+
+  assertMirrorAdaptStructure(doSection)
 
   const uiTerms = [
     "button", "sidebar", "header", "nav", "modal", "form", "field",
@@ -205,6 +254,30 @@ function assertEnrichedPromptQuality(text: string): void {
   const genericHit = genericObserved.find((phrase) => observed.toLowerCase().includes(phrase))
   if (genericHit) {
     throw new Error(`Enrichment failed quality gate: generic observation ${genericHit}`)
+  }
+}
+
+function assertMirrorAdaptStructure(doSection: string): void {
+  const mirrorLabel = "Mirror (structure to copy from the captured UI):"
+  const adaptLabel = "Adapt (changes required for the user's app):"
+
+  const hasMirror = doSection.includes(mirrorLabel)
+  const hasAdapt = doSection.includes(adaptLabel)
+  if (!hasMirror || !hasAdapt) {
+    const missing = !hasMirror && !hasAdapt
+      ? "Mirror and Adapt"
+      : !hasMirror ? "Mirror" : "Adapt"
+    throw new Error(`Enrichment failed quality gate: Do section must split Mirror and Adapt (missing ${missing})`)
+  }
+
+  const mirrorBlock = doSection.split(mirrorLabel)[1]?.split(adaptLabel)[0] ?? ""
+  const adaptBlock = doSection.split(adaptLabel)[1] ?? ""
+  const hasBullet = (block: string) => /^\s*[-*]\s+\S+/m.test(block)
+  if (!hasBullet(mirrorBlock)) {
+    throw new Error("Enrichment failed quality gate: Do section Mirror must contain at least one bullet")
+  }
+  if (!hasBullet(adaptBlock)) {
+    throw new Error("Enrichment failed quality gate: Do section Adapt must contain at least one bullet")
   }
 }
 

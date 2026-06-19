@@ -295,6 +295,10 @@ async function runCompile(args: ParsedArgs): Promise<void> {
   }
   for (const w of compileResult.warnings) console.log(`  Warning: ${w}`)
 
+  if (!cursorEvents || cursorEvents.length === 0) {
+    console.log("  Warning: No cursor events. Deictic references may be unresolved.")
+  }
+
   const enrich = args.enrich !== "false"
 
   writeJsonArtifact(runRoot, "hidden-context.json", compileResult.promptDraft.hiddenContext)
@@ -339,6 +343,8 @@ async function runCompile(args: ParsedArgs): Promise<void> {
       formatError(`Visual prompt compilation failed: ${reason}`)
       process.exit(1)
     }
+  } else {
+    console.log("  Notice: enrichment skipped. visible-prompt.md is empty.")
   }
 
   stageAllArtifacts({

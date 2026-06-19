@@ -11,12 +11,6 @@ import {
   buildCoverageGapLine,
   buildClickGapLine,
 } from "./helpers.js"
-import {
-  transcriptTimingLine,
-  frameEvidenceLines,
-  cursorEvidenceLines,
-  captureGapLines,
-} from "./evidence.js"
 
 export type CompileArgs = {
   transcript: string
@@ -24,12 +18,6 @@ export type CompileArgs = {
   audioPath?: string
   videoPath?: string
   runRoot: string
-  segments?: TranscriptSegment[]
-  frames?: SelectedFrame[]
-  cursorEvents?: CursorEvent[]
-}
-
-type PromptEvidence = {
   segments?: TranscriptSegment[]
   frames?: SelectedFrame[]
   cursorEvents?: CursorEvent[]
@@ -74,62 +62,6 @@ export function buildInputPaths(args: CompileArgs): InputPaths {
   }
 }
 
-export function generateVisiblePrompt(
-  transcript: string,
-  paths: InputPaths,
-  evidence: PromptEvidence = {}
-): string {
-  const transcriptEvidence = buildTranscriptEvidence(transcript, evidence.segments)
-  const visualEvidence = frameEvidenceLines(evidence.frames, paths.screenshots.map((s) => s.rel)).join("\n")
-  const cursorEvidence = cursorEvidenceLines(evidence.cursorEvents).join("\n")
-  const captureGaps = captureGapLines({
-    segments: evidence.segments,
-    frames: evidence.frames,
-    cursorEvents: evidence.cursorEvents,
-    hasVideo: paths.video !== undefined,
-    deicticRisk: containsDeicticLanguage(transcript),
-  }).join("\n")
-
-  return `## Intent
-${trimTranscript(transcript)}
-
-## Observed
-${transcriptEvidence}
-${visualEvidence}
-
-## Target
-${cursorEvidence}
-
-## Do
-${extractChanges(transcript)}
-
-## Acceptance
-- [ ] The implementation matches the interpreted intent and target above.
-- [ ] The referenced visual structure is adapted to the app without unrelated backend behavior changes.
-- [ ] Any unresolved evidence gap below is handled explicitly before coding.
-
-## Confidence
-${captureGaps}
-`
-}
-
-function trimTranscript(text: string): string {
-  return text.trim().length > 0
-    ? text.trim()
-    : "[No transcript content provided]"
-}
-
-function buildTranscriptEvidence(
-  transcript: string,
-  segments?: TranscriptSegment[]
-): string {
-  const lines = [`- Transcript timing: ${transcriptTimingLine(segments)}`]
-  if (transcript.trim().length > 0) {
-    lines.push(`- Raw transcript: ${transcript.trim()}`)
-  }
-  return lines.join("\n")
-}
-
 function buildEvidenceWarnings(args: CompileArgs): string[] {
   const warnings: string[] = []
 
@@ -144,22 +76,6 @@ function buildEvidenceWarnings(args: CompileArgs): string[] {
   }
 
   return warnings
-}
-
-function containsDeicticLanguage(transcript: string): boolean {
-  const lower = transcript.toLowerCase()
-  return [" this ", " here", "there", "over here", "back here", "that "]
-    .some((token) => lower.includes(token.trim()))
-}
-
-function extractChanges(transcript: string): string {
-  const lines = transcript
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-
-  if (lines.length === 0) return "1. [No specific changes identified]"
-  return lines.map((l, i) => `${i + 1}. ${l}`).join("\n")
 }
 
 export function generateHiddenContext(
@@ -203,17 +119,11 @@ export function compile(args: CompileArgs): CompileResult {
 
   const paths = buildInputPaths(args)
 
-  const visiblePrompt = generateVisiblePrompt(args.transcript, paths, {
-    segments: args.segments,
-    frames: args.frames,
-    cursorEvents: args.cursorEvents,
-  })
-
   const hiddenContext = generateHiddenContext(args.transcript, paths)
 
   const promptDraft: PromptDraft = {
     title: "OpenVysta Compiled Prompt",
-    visiblePrompt,
+    visiblePrompt: "",
     hiddenContext,
     confidence: "medium" as const,
   }
