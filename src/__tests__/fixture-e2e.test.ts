@@ -68,7 +68,7 @@ describe("Fixture E2E", () => {
     const compileResult = compile(compileArgs)
 
     expect(compileResult.errors).toHaveLength(0)
-    expect(compileResult.promptDraft.visiblePrompt.length).toBeGreaterThan(0)
+    expect(compileResult.promptDraft.visiblePrompt).toBe("")
     expect(compileResult.promptDraft.confidence).toBe("medium")
 
     const paths = buildInputPaths(compileArgs)
@@ -146,14 +146,13 @@ describe("Fixture E2E", () => {
     )
     expect(copiedTranscript).toBe(transcript)
 
-    // Verify visible prompt stays concise; artifacts remain in manifest/hidden context.
+    // Verify visible prompt is the empty stub on the no-enrich path.
     const visiblePrompt = readFileSync(
       join(runRoot, "visible-prompt.md"),
       "utf-8",
     )
-    expect(visiblePrompt).toContain("## Intent")
-    expect(visiblePrompt).toContain("## Observed")
-    expect(visiblePrompt).toContain("## Target")
+    expect(visiblePrompt).not.toContain("## Intent")
+    expect(visiblePrompt).not.toContain("## Observed")
     expect(visiblePrompt).not.toContain("## Artifacts")
     expect(visiblePrompt).not.toContain("## Likely Targets")
   

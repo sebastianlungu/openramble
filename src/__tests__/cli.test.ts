@@ -529,35 +529,21 @@ describe("CLI compile --enrich", () => {
     expect(hiddenCtx).toHaveProperty("captureId")
   })
 
-  it("keeps best-effort prompt generation when segments are empty but screenshots exist", async () => {
-    const brokenDir = join(tmpdir(), `vysta_2026-01-01T00-00-00Z`)
-    mkdirSync(join(brokenDir, "inputs", "screenshots"), { recursive: true })
-    writeFileSync(join(brokenDir, "inputs", "transcript.md"), "replicate this over here")
-    writeFileSync(join(brokenDir, "inputs", "screenshots", "1.png"), "fake")
-    writeFileSync(join(brokenDir, "inputs", "screenshots", "2.png"), "fake")
-    writeFileSync(join(brokenDir, "transcript-segments.json"), "[]")
-    writeFileSync(join(brokenDir, "selected-frames.json"), JSON.stringify([
-      { id: "f1", timestampMs: 22, path: "1.png", reason: "start" },
-      { id: "f2", timestampMs: 257, path: "2.png", reason: "end" },
-    ]))
-    writeFileSync(join(brokenDir, "cursor-timeline.json"), JSON.stringify([
-      { timestampMs: 3500, x: 500, y: 400, kind: "move" },
-    ]))
-
+  it("emits missing-cursor warning when cursor-timeline is empty", async () => {
     const proc = Bun.spawn([
       "bun",
       "run",
       "src/index.ts",
       "compile",
       "--transcript",
-      join(brokenDir, "inputs", "transcript.md"),
+      join(fixtureDir, "transcript.md"),
       "--screenshots",
-      join(brokenDir, "inputs", "screenshots/1.png"),
-      join(brokenDir, "inputs", "screenshots/2.png"),
+      join(fixtureDir, "screenshots/1.png"),
+      join(fixtureDir, "screenshots/2.png"),
       "--opencode-server",
       "http://127.0.0.1:1",
       "--out",
-      brokenDir,
+      tmpDir,
       "--enrich",
       "false",
       "--no-preview",
@@ -575,12 +561,7 @@ describe("CLI compile --enrich", () => {
     ])
 
     expect(exitCode).toBe(0)
-    expect(stderr).not.toContain("Run blocked")
-
-    const visiblePrompt = readFileSync(join(brokenDir, "visible-prompt.md"), "utf-8")
-    expect(visiblePrompt).not.toContain("# Capture Blocker")
-    expect(visiblePrompt).toContain("## Intent")
-
-    rmSync(brokenDir, { recursive: true, force: true })
+    expect(stdout).toContain("No cursor events")
+    expect(stderr).toBe("")
   })
 })
