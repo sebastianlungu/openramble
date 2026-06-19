@@ -57,11 +57,25 @@ describe("Enricher", () => {
   const serverUrl = "http://localhost:4096"
   const validEnrichedText = `Intent: Update the login screen styling.
 
-Observed: The screenshots show a login page with a header area, a primary login button, and spacing that currently appears too tight for the requested design.
+Observed: The screenshots show a login page with a header area and a primary login button. Layout: two stacked regions, header above login form. Controls: one primary button, two text inputs. Content: a brand mark, a form label, a call-to-action.
+  Style tokens:
+    theme: light
+    background: white
+    text: dark grey
+    font feel: sans-serif
+    density: comfortable
+    accent: not discernible
+    borders: 1px muted
 
-Target: The target is the visible login button and nearby header spacing, based on the transcript and supplied frames.
+Target: The target is the visible login button and the header padding.
 
-Do: Change the login button to blue and increase the header padding while preserving surrounding layout.
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Header region with brand mark above the form
+    - Two-pane top-and-bottom layout
+  Adapt (changes required for the user's app):
+    - Change the primary button background to blue
+    - Increase header padding to 24px
 
 Acceptance:
 - [ ] Login button is blue.
@@ -169,6 +183,11 @@ Acceptance:
     expect(call.body.system).toContain("Intent:")
     expect(call.body.system).toContain("Observed:")
     expect(call.body.system).toContain("Target:")
+    expect(call.body.system).toContain("Style tokens")
+    expect(call.body.system).toContain("Mirror (structure to copy from the captured UI):")
+    expect(call.body.system).toContain("Adapt (changes required for the user's app):")
+    expect(call.body.system).toContain("or a close equivalent")
+    expect(call.body.system).toContain("recording pill")
     expect(call.body.system).toContain("Do:")
     expect(call.body.system).toContain("Acceptance:")
     expect(call.body.agent).toBe("plan")
@@ -698,5 +717,239 @@ Acceptance:
     expect(textPart.text).toContain("Raw transcript:")
     expect(textPart.text).toContain(transcript)
     expect(textPart.text).not.toContain("## Timeline")
+  })
+
+  it("rejects Intent that adds 'or a close equivalent of it' hedge", async () => {
+    const hedgedText = `Intent: Rebuild this for my app, or a close equivalent of it.
+
+Observed: The screen shows a settings page with sidebar navigation, a header, and content panels. Layout: left sidebar, main content area, top header. Controls: nav items, buttons, toggles. Content: page title, settings rows.
+  Style tokens:
+    theme: dark
+    background: near-black
+    text: light
+    font feel: sans-serif
+    density: comfortable
+    accent: not discernible
+    borders: hairline muted
+
+Target: The target is the visible settings page.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Left sidebar with nav items
+  Adapt (changes required for the user's app):
+    - Apply to the user's app
+
+Acceptance:
+- [ ] Sidebar visible.
+- [ ] Layout matches.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-hedge" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-hedge" }, parts: [{ type: "text", text: hedgedText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("quality gate")
+  })
+
+  it("rejects Observed without enough style tokens", async () => {
+    const noTokensText = `Intent: Update the page.
+
+Observed: A generic screen with some UI. Layout: one pane. Controls: a button.
+
+Target: The target is the button.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - One button
+  Adapt (changes required for the user's app):
+    - Recolor the button
+
+Acceptance:
+- [ ] Button recolored.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-notokens" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-notokens" }, parts: [{ type: "text", text: noTokensText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("missing style tokens")
+  })
+
+  it("accepts Observed with three style tokens including 'not discernible'", async () => {
+    const tokensWithNotDiscernible = `Intent: Update the page.
+
+Observed: A page with form fields and a button. Layout: vertical form. Controls: three inputs, one button. Content: labels.
+  Style tokens:
+    theme: light
+    background: white
+    text: dark
+    font feel: sans-serif
+    density: comfortable
+    accent: not discernible
+    borders: 1px muted
+
+Target: The form.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Vertical form layout
+  Adapt (changes required for the user's app):
+    - Update labels for the user's app
+
+Acceptance:
+- [ ] Form renders.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-tokens-ok" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-tokens-ok" }, parts: [{ type: "text", text: tokensWithNotDiscernible }] },
+      error: null,
+    })
+
+    const result = await enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })
+    expect(result.text).toBe(tokensWithNotDiscernible)
+  })
+
+  it("rejects Do section that is a single free-form paragraph", async () => {
+    const freeFormDoText = `Intent: Update the page.
+
+Observed: A page with a button. Layout: single column. Controls: one button. Content: label text.
+  Style tokens:
+    theme: dark
+    background: black
+    text: white
+    font feel: monospace
+    density: sparse
+    accent: not discernible
+    borders: 1px muted
+
+Target: The button.
+
+Do: Recreate the dark layout and recolor the button to blue.
+
+Acceptance:
+- [ ] Layout matches.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-freeform" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-freeform" }, parts: [{ type: "text", text: freeFormDoText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("Mirror and Adapt")
+  })
+
+  it("rejects Do section with only Mirror (no Adapt)", async () => {
+    const onlyMirrorText = `Intent: Update the page.
+
+Observed: A page with a button. Layout: single column. Controls: one button. Content: label text.
+  Style tokens:
+    theme: dark
+    background: black
+    text: white
+    font feel: monospace
+    density: sparse
+    accent: not discernible
+    borders: 1px muted
+
+Target: The button.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Single column
+    - One button
+
+Acceptance:
+- [ ] Layout matches.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-only-mirror" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-only-mirror" }, parts: [{ type: "text", text: onlyMirrorText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("Adapt")
+  })
+
+  it("rejects Observed that mentions a recording pill", async () => {
+    const pillText = `Intent: Update the page.
+
+Observed: The screen has a sidebar and a small floating recording pill at the top. Layout: two-pane. Controls: a button. Content: a label.
+  Style tokens:
+    theme: dark
+    background: black
+    text: white
+    font feel: sans-serif
+    density: comfortable
+    accent: not discernible
+    borders: hairline muted
+
+Target: The sidebar.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Two-pane
+  Adapt (changes required for the user's app):
+    - Recolor
+
+Acceptance:
+- [ ] Sidebar visible.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-pill" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-pill" }, parts: [{ type: "text", text: pillText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("recording pill")
+  })
+
+  it("rejects Observed that mentions a capture banner", async () => {
+    const bannerText = `Intent: Update the page.
+
+Observed: The screen has a settings panel and a capture banner across the top. Layout: two-pane. Controls: a button. Content: a label.
+  Style tokens:
+    theme: light
+    background: white
+    text: dark
+    font feel: sans-serif
+    density: comfortable
+    accent: not discernible
+    borders: 1px muted
+
+Target: The settings panel.
+
+Do:
+  Mirror (structure to copy from the captured UI):
+    - Two-pane
+  Adapt (changes required for the user's app):
+    - Recolor
+
+Acceptance:
+- [ ] Settings visible.`
+
+    mockCreate.mockResolvedValueOnce({ data: { id: "s-banner" }, error: null })
+    mockPrompt.mockResolvedValueOnce({
+      data: { info: { role: "assistant", id: "m-banner" }, parts: [{ type: "text", text: bannerText }] },
+      error: null,
+    })
+
+    await expect(enrichPrompt({
+      transcript, screenshotPaths, opencodeServerUrl: serverUrl,
+    })).rejects.toThrow("capture banner")
   })
 })
