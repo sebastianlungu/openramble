@@ -25,4 +25,4 @@
 
 - [x] 5.1 Run `bun test` and `swift test` and fix any rename regressions until both relevant suites pass.
 - [x] 5.2 Re-run repo-wide searches to confirm no first-party shipped OpenVysta identity remains outside intentional lockfile or git-history data.
-- [ ] 5.3 Inspect `git status` / `git diff`, commit the full rename, push the branch to the remote, and finish with a clean worktree.
+- [x] 5.3 Inspect `git status` / `git diff`, commit the full rename, push the branch to the remote, and finish with a clean worktree.
