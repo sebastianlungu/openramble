@@ -42,7 +42,7 @@ final class SetupWindow: NSObject, NSWindowDelegate, @unchecked Sendable {
                 backing: .buffered,
                 defer: false
             )
-            w.title = "OpenVysta Setup"
+            w.title = "Open-Ramble Setup"
             w.level = .floating
             w.collectionBehavior = [.canJoinAllSpaces]
             w.isReleasedWhenClosed = false
@@ -119,7 +119,7 @@ struct SetupView: View {
             Text("Permissions Required")
                 .font(.headline)
 
-            Text("OpenVysta needs Screen Recording, Microphone, and Speech Recognition to capture and transcribe.")
+            Text("Open-Ramble needs Screen Recording, Microphone, and Speech Recognition to capture and transcribe.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
@@ -167,7 +167,7 @@ struct SetupView: View {
 
             Divider()
 
-            Text("Screen Recording is special on macOS: after you turn the toggle on, the current OpenVysta process can stay denied until restart. If the toggle is already on in System Settings, use Relaunch.")
+            Text("Screen Recording is special on macOS: after you turn the toggle on, the current Open-Ramble process can stay denied until restart. If the toggle is already on in System Settings, use Relaunch.")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -181,7 +181,7 @@ struct SetupView: View {
                 } else if permissionStatus?.onlyScreenRecordingIsMissing == true {
                     Image(systemName: "arrow.clockwise.circle.fill")
                         .foregroundColor(.yellow)
-                    Text("Screen Recording is the only thing left. If the toggle is already on, relaunch OpenVysta.")
+                    Text("Screen Recording is the only thing left. If the toggle is already on, relaunch Open-Ramble.")
                         .font(.caption)
                         .foregroundColor(.yellow)
                 } else {

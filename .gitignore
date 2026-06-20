@@ -1,6 +1,6 @@
 .DS_Store
 node_modules/
-.openvysta/
+.open-ramble/
 bun.lock
 *.log
 
@@ -14,4 +14,3 @@ coverage/
 
 # docs
 docs/
-

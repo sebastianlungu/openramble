@@ -194,8 +194,8 @@ final class CompilerBridge: CompilerBridgeProtocol {
 
     static let defaultCompileTimeout: Duration = .seconds(180)
 
-    private static let repoRootEnvKey = "OPENVYSTA_REPO_ROOT"
-    private static let repoRootBundleKey = "OpenVystaRepoRoot"
+    private static let repoRootEnvKey = "OPEN_RAMBLE_REPO_ROOT"
+    private static let repoRootBundleKey = "OpenRambleRepoRoot"
 
     private let compilerPath: String
     private let bunPath: String
@@ -348,7 +348,7 @@ final class CompilerBridge: CompilerBridgeProtocol {
                 hiddenCtx = decoded
             }
 
-            let title = visibleText.components(separatedBy: "\n").first ?? "OpenVysta Result"
+            let title = visibleText.components(separatedBy: "\n").first ?? "Open-Ramble Result"
             let promptDraft = PromptDraftOutput(
                 title: title,
                 visiblePrompt: visibleText,
@@ -463,10 +463,10 @@ final class CompilerBridge: CompilerBridgeProtocol {
     private static func commonHomeRepoCandidates() -> [String] {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return [
-            "\(home)/openvysta",
-            "\(home)/Code/openvysta",
-            "\(home)/Developer/openvysta",
-            "\(home)/Projects/openvysta"
+            "\(home)/open-ramble",
+            "\(home)/Code/open-ramble",
+            "\(home)/Developer/open-ramble",
+            "\(home)/Projects/open-ramble"
         ]
     }
 

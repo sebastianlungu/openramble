@@ -83,7 +83,7 @@ export function generateHiddenContext(
   paths: InputPaths
 ): Record<string, unknown> {
   return {
-    captureId: `vysta_${randomUUID().replace(/-/g, "_")}`,
+    captureId: `ramble_${randomUUID().replace(/-/g, "_")}`,
     runRoot: paths.hiddenCtxAbs.split("/").slice(0, -1).join("/"),
     transcript,
     transcriptPath: paths.transcriptAbs,
@@ -122,7 +122,7 @@ export function compile(args: CompileArgs): CompileResult {
   const hiddenContext = generateHiddenContext(args.transcript, paths)
 
   const promptDraft: PromptDraft = {
-    title: "OpenVysta Compiled Prompt",
+    title: "Open-Ramble Compiled Prompt",
     visiblePrompt: "",
     hiddenContext,
     confidence: "medium" as const,

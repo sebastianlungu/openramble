@@ -1,11 +1,11 @@
 ## 1. Async process wait
 
-- [ ] 1.1 In `apps/macos-helper/Sources/OpenVysta/CompilerBridge.swift`, replace the synchronous `process.waitUntilExit()` inside `DefaultProcessRunner.run` with `withCheckedThrowingContinuation` + `process.terminationHandler`, so the calling task is suspended (not blocked) until the subprocess exits.
+- [ ] 1.1 In `apps/macos-helper/Sources/OpenRamble/CompilerBridge.swift`, replace the synchronous `process.waitUntilExit()` inside `DefaultProcessRunner.run` with `withCheckedThrowingContinuation` + `process.terminationHandler`, so the calling task is suspended (not blocked) until the subprocess exits.
 - [ ] 1.2 Keep the existing `Pipe`-based stderr drain in `DefaultProcessRunner.run`; the drain continues to read from the pipe handle after the continuation resumes so the existing `ProcessResult.stderrData` shape is preserved.
 
 ## 2. Bounded process runner
 
-- [ ] 2.1 Add a new `BoundedProcessRunner` type to `apps/macos-helper/Sources/OpenVysta/CompilerBridge.swift` that conforms to the existing `ProcessRunner` protocol and wraps an inner `ProcessRunner` plus a `Duration` deadline.
+- [ ] 2.1 Add a new `BoundedProcessRunner` type to `apps/macos-helper/Sources/OpenRamble/CompilerBridge.swift` that conforms to the existing `ProcessRunner` protocol and wraps an inner `ProcessRunner` plus a `Duration` deadline.
 - [ ] 2.2 On timeout, the wrapper sends `process.terminate()` (SIGTERM), waits up to 5 seconds for the process to actually exit, then returns a `ProcessResult(terminationStatus: 137, stderrData: <captured stderr>)` plus a `didTimeOut: Bool` flag the call site can use to label the failure.
 - [ ] 2.3 If the subprocess ignores SIGTERM past the 5-second grace window, the wrapper still returns a timeout-flagged result to the caller; the orphan subprocess is left to exit on its own.
 
@@ -18,12 +18,12 @@
 
 ## 4. Verify the call site is unaffected
 
-- [ ] 4.1 Confirm `CaptureEngine.finalizeArtifacts` (`apps/macos-helper/Sources/OpenVysta/CaptureEngine.swift:279`) still awaits `compilerBridge.compile(...)` without changes; the new `timeout` parameter is optional and defaults to 3 minutes.
-- [ ] 4.2 Confirm the existing `showCompletion` failure branch (`apps/macos-helper/Sources/OpenVysta/CaptureEngine.swift:313`) consumes a `nil` `promptDraft` exactly the same way it does for any other compiler failure; no banner or History shape change.
+- [ ] 4.1 Confirm `CaptureEngine.finalizeArtifacts` (`apps/macos-helper/Sources/OpenRamble/CaptureEngine.swift:279`) still awaits `compilerBridge.compile(...)` without changes; the new `timeout` parameter is optional and defaults to 3 minutes.
+- [ ] 4.2 Confirm the existing `showCompletion` failure branch (`apps/macos-helper/Sources/OpenRamble/CaptureEngine.swift:313`) consumes a `nil` `promptDraft` exactly the same way it does for any other compiler failure; no banner or History shape change.
 
 ## 5. Tests
 
-- [ ] 5.1 In `apps/macos-helper/Tests/OpenVystaTests/CompilerBridgeTests.swift`, add a `HangingMockProcessRunner` (or extend `MockProcessRunner`) that, when a `shouldHang` flag is set, blocks inside `run` for longer than the test timeout before returning.
+- [ ] 5.1 In `apps/macos-helper/Tests/OpenRambleTests/CompilerBridgeTests.swift`, add a `HangingMockProcessRunner` (or extend `MockProcessRunner`) that, when a `shouldHang` flag is set, blocks inside `run` for longer than the test timeout before returning.
 - [ ] 5.2 Add a test that drives `BoundedProcessRunner` with a hanging inner runner and a 50ms deadline; assert it returns within ~100ms with `didTimeOut == true` and a non-zero `terminationStatus`.
 - [ ] 5.3 Add a test that drives `BoundedProcessRunner` with a non-hanging inner runner and a generous deadline; assert it returns the inner result unchanged (`didTimeOut == false`, status preserved).
 - [ ] 5.4 Add a test that calls `CompilerBridge.compile(...)` with a `timeout: Duration? = .milliseconds(50)` against a mock that hangs, and asserts the returned `CompilerOutput` has `promptDraft == nil` and an `errors[0]` string that starts with `Compile timed out after`.

@@ -1,14 +1,14 @@
-# OpenVysta PRD
+# Open-Ramble PRD
 
 Date: 2026-06-16
 Status: Draft v0.2
 Owner: Sebastian Lungu
-Product action name: OpenVysta
+Product action name: Open-Ramble
 Primary integration: OpenCode
 
 ## 1. Product Thesis
 
-OpenVysta is a zero-friction multimodal intent compiler for coding agents.
+Open-Ramble is a zero-friction multimodal intent compiler for coding agents.
 
 The product lets the user hold a mouse chord, speak naturally while pointing at the screen, release, and receive a high-quality implementation prompt docked over the editor. The core job is grounded translation:
 
@@ -16,7 +16,7 @@ The product lets the user hold a mouse chord, speak naturally while pointing at 
 spoken intent + visible UI + cursor emphasis + timing + app/code context -> precise development brief
 ```
 
-OpenVysta is not primarily a screen recorder, bug reporter, browser automation tool, dictation app, or DOM operator.
+Open-Ramble is not primarily a screen recorder, bug reporter, browser automation tool, dictation app, or DOM operator.
 
 ## 2. Core Problem
 
@@ -32,11 +32,11 @@ Primary promise:
 Stop writing prompts manually. Capture what you mean.
 ```
 
-OpenVysta succeeds only if the compiled prompt already reflects what was visible, what the user pointed at, and what should be built. It fails if the downstream coding agent still has to infer the screen for the first time.
+Open-Ramble succeeds only if the compiled prompt already reflects what was visible, what the user pointed at, and what should be built. It fails if the downstream coding agent still has to infer the screen for the first time.
 
 ## 4. Scope Boundary
 
-OpenVysta compiles prompts from these evidence sources only:
+Open-Ramble compiles prompts from these evidence sources only:
 
 - Transcript text
 - Timestamped transcript segments when available
@@ -47,7 +47,7 @@ OpenVysta compiles prompts from these evidence sources only:
 - Native capture metadata that is not browser-derived
 - OpenCode handoff configuration
 
-OpenVysta does not collect, accept, store, infer from, or hand off:
+Open-Ramble does not collect, accept, store, infer from, or hand off:
 
 - Browser DOM data
 - Browser route, URL, or title
@@ -104,7 +104,7 @@ Build and validate the compiler plus OpenCode handoff first. Keep native capture
 
 ## 8. OpenCode Handoff Strategy
 
-OpenVysta is OpenCode-first.
+Open-Ramble is OpenCode-first.
 
 Relevant capabilities:
 
@@ -123,7 +123,7 @@ Capture ends
 -> OpenCode session receives hidden context with noReply
 -> user previews prompt
 -> user chooses Send
--> OpenVysta appends visible prompt to OpenCode TUI
+-> Open-Ramble appends visible prompt to OpenCode TUI
 ```
 
 Fallbacks:
@@ -177,7 +177,7 @@ The visible prompt must not tell the downstream coding agent to inspect screensh
 | Model | Defaults to the current OpenCode-configured model. User may choose another OpenCode-available model. |
 | OpenCode server | CLI flag first, then `OPENCODE_SERVER_URL`, then `http://localhost:4096`. |
 | Session ID | CLI flag first, then `OPENCODE_SESSION_ID`, then automatic discovery or explicit failure. |
-| Output path | Defaults to `./.openvysta/runs/<run-id>/`. |
+| Output path | Defaults to `./.open-ramble/runs/<run-id>/`. |
 
 ### 10.2 Artifact Contract
 
@@ -213,12 +213,12 @@ Hidden context must not include browser-shaped or scout-shaped fields.
 
 ## 11. Privacy and Security Requirements
 
-OpenVysta captures sensitive surfaces by design. Privacy cannot be an afterthought.
+Open-Ramble captures sensitive surfaces by design. Privacy cannot be an afterthought.
 
 Default privacy posture:
 
 ```text
-Nothing is captured unless the user intentionally invokes OpenVysta.
+Nothing is captured unless the user intentionally invokes Open-Ramble.
 Raw video stays local by default.
 Only selected frames, transcript, and explicitly needed metadata are sent to cloud models.
 ```
@@ -351,13 +351,13 @@ Build-complete MVP is complete when:
 7. On send, hidden context is injected into OpenCode or saved as documented fallback, and visible prompt is appended.
 8. If OpenCode hidden-context injection fails, `hidden-context.json` is saved and the user sees explicit fallback instructions.
 9. The visible prompt is honest about uncertainty.
-10. The user completes at least one real UI change through OpenCode using OpenVysta output.
+10. The user completes at least one real UI change through OpenCode using Open-Ramble output.
 11. Unit tests and one fixture E2E pass.
 
 Validation-complete MVP is complete when:
 
 1. 10 real UI tasks are scored with the PRD scorecard.
-2. OpenVysta prompts beat manual prompts on at least 7 of 10 real UI tasks.
+2. Open-Ramble prompts beat manual prompts on at least 7 of 10 real UI tasks.
 3. Native macOS capture remains blocked until this gate passes.
 
 ## 16. Risks

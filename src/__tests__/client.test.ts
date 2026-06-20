@@ -1,13 +1,13 @@
 import { describe, it, expect } from "bun:test"
 import {
-  DEFAULT_VYSTA_MODEL,
+  DEFAULT_OPEN_RAMBLE_MODEL,
   findModelCapability,
   getModelCapabilities,
 } from "../opencode-bridge/client.js"
 
 describe("OpenCode client capability parsing", () => {
-  it("hard defaults OpenVysta to OpenAI GPT-5.4", () => {
-    expect(DEFAULT_VYSTA_MODEL).toBe("openai/gpt-5.4")
+  it("hard defaults Open-Ramble to OpenAI GPT-5.4", () => {
+    expect(DEFAULT_OPEN_RAMBLE_MODEL).toBe("openai/gpt-5.4")
   })
 
   it("reads image support from current capabilities payload", async () => {

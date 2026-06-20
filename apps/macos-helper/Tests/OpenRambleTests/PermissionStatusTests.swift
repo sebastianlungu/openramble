@@ -1,5 +1,5 @@
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct PermissionStatusTests {
 

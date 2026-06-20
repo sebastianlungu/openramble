@@ -10,7 +10,7 @@ function expectNoRemovedField(obj: unknown, fieldParts: string[]): void {
 describe("Compiler", () => {
   const transcript = "Change the login button to blue. Add more padding."
   const screenshotPaths = ["/tmp/s1.png", "/tmp/s2.png"]
-  const runRoot = "/tmp/vysta-test"
+  const runRoot = "/tmp/ramble-test"
 
   it("builds input paths correctly", () => {
     const paths = buildInputPaths({

@@ -41,6 +41,6 @@
 ## 7. Out of scope (deferred)
 
 - [x] 7.1 Project-context discovery (`--context auto|file:<path>`) — separate change.
-- [x] 7.2 Swift `SCContentFilter` exclusion of the OpenVysta capture banner in `apps/macos-helper/Sources/OpenVysta/ScreenCapture.swift` — separate change.
+- [x] 7.2 Swift `SCContentFilter` exclusion of the Open-Ramble capture banner in `apps/macos-helper/Sources/OpenRamble/ScreenCapture.swift` — separate change.
 - [x] 7.3 Post-enrichment quality scorer implementing the AGENTS.md scorecard — separate change.
 - [x] 7.4 "Refine" preview action in `src/preview.ts` (one-question clarification re-run) — separate change.

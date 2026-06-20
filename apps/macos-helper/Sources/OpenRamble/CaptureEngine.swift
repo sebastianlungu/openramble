@@ -346,7 +346,7 @@ final class CaptureEngine: @unchecked Sendable {
     /// compiler-stage outcome (explicit errors, no draft, warnings only,
     /// or `compiled == nil`). Returns the persisted entry plus whether
     /// the raw error log was written, where it was written, and whether
-    /// the history entry itself was appended to `~/.openvysta/history.json`.
+    /// the history entry itself was appended to `~/.open-ramble/history.json`.
     /// Tests can assert the data shape without depending on the global
     /// history file.
     @discardableResult
@@ -411,7 +411,7 @@ final class CaptureEngine: @unchecked Sendable {
             let logURL = try SessionStore.saveFailureLog(rawLog, to: runDir)
             return (true, logURL.path)
         } catch {
-            NSLog("[OpenVysta] failed to persist compiler-error.log at \(runDir.path): \(error.localizedDescription)")
+            NSLog("[Open-Ramble] failed to persist compiler-error.log at \(runDir.path): \(error.localizedDescription)")
             return (false, nil)
         }
     }
@@ -422,7 +422,7 @@ final class CaptureEngine: @unchecked Sendable {
             try SessionStore.saveToHistory(entry)
             return true
         } catch {
-            NSLog("[OpenVysta] failed to save failed history entry: \(error.localizedDescription)")
+            NSLog("[Open-Ramble] failed to save failed history entry: \(error.localizedDescription)")
             return false
         }
     }

@@ -80,10 +80,10 @@ async function createIsolatedTestSession(
 
 async function run() {
   console.log("================================================")
-  console.log("  OpenVysta Phase 0: OpenCode Bridge Proof")
+  console.log("  Open-Ramble Phase 0: OpenCode Bridge Proof")
   console.log("================================================\n")
 
-  const pngPath = resolve("/tmp/openvysta-phase0-test.png")
+  const pngPath = resolve("/tmp/open-ramble-phase0-test.png")
 
   try {
     // --- Test 1: Server connection ---
@@ -214,7 +214,7 @@ async function run() {
           body: {
             noReply: true,
             parts: [
-              { type: "text", text: "[HIDDEN CONTEXT TEST] This is a hidden context injection test from OpenVysta Phase 0." },
+              { type: "text", text: "[HIDDEN CONTEXT TEST] This is a hidden context injection test from Open-Ramble Phase 0." },
             ],
           },
         })
@@ -265,7 +265,7 @@ async function run() {
     try {
       const appendResponse = await client.tui.appendPrompt({
         body: {
-          text: "[OpenVysta Phase 0 Test] This is a test prompt appended by the OpenVysta bridge proof script.",
+          text: "[Open-Ramble Phase 0 Test] This is a test prompt appended by the Open-Ramble bridge proof script.",
         },
       })
 
@@ -312,9 +312,9 @@ async function run() {
         record(
           "File part test (image)",
           false,
-          "SKIPPED: OpenVysta model does not support image input. File parts cannot be tested.",
+          "SKIPPED: Open-Ramble model does not support image input. File parts cannot be tested.",
           {
-            finding: `An image-capable OpenVysta model must be configured. Expected ${PROOF_MODEL}.`,
+            finding: `An image-capable Open-Ramble model must be configured. Expected ${PROOF_MODEL}.`,
           }
         )
       } else {

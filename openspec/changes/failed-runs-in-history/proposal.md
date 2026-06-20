@@ -1,6 +1,6 @@
 ## Why
 
-Today every successful capture is saved to the menubar **History** popover, but a capture whose compiler step fails after a full recording disappears into a transient floating banner and is then lost forever. The user has already invested speech, screen capture, and cursor effort; the artifacts often still live in `~/.openvysta/runs/<runId>/`, but there is no surface that lets the user see what happened, copy the failure reason, or revisit the run. This violates NN/g's *Visibility of System Status* and OpenVysta's own audit-trail promise in `AGENTS.md`.
+Today every successful capture is saved to the menubar **History** popover, but a capture whose compiler step fails after a full recording disappears into a transient floating banner and is then lost forever. The user has already invested speech, screen capture, and cursor effort; the artifacts often still live in `~/.open-ramble/runs/<runId>/`, but there is no surface that lets the user see what happened, copy the failure reason, or revisit the run. This violates NN/g's *Visibility of System Status* and Open-Ramble's own audit-trail promise in `AGENTS.md`.
 
 Users have explicitly asked that error runs "appear in the history just like a normal pass."
 
@@ -27,11 +27,11 @@ None. `prompt-history` does not yet exist as a documented capability — this ch
 ## Impact
 
 - **Code**:
-  - `apps/macos-helper/Sources/OpenVysta/Types.swift` — extend `PromptHistoryEntry` schema.
-  - `apps/macos-helper/Sources/OpenVysta/SessionStore.swift` — backward-compatible decode path; add error-log writer helper.
-  - `apps/macos-helper/Sources/OpenVysta/CaptureEngine.swift` — save failed entries from the compiler-stage path; update banner copy.
-  - `apps/macos-helper/Sources/OpenVysta/PromptHistory.swift` — render status badge, failure reason, and expanded copy-log affordance.
-  - `apps/macos-helper/Tests/OpenVystaTests/PromptHistoryTests.swift` — new tests for failed-entry persistence, decode-with-missing-status, and view rendering.
-- **Data**: New `compiler-error.log` artifact written into existing run directories. Existing `~/.openvysta/history.json` files remain readable (legacy entries decode as `status: success`).
+  - `apps/macos-helper/Sources/OpenRamble/Types.swift` — extend `PromptHistoryEntry` schema.
+  - `apps/macos-helper/Sources/OpenRamble/SessionStore.swift` — backward-compatible decode path; add error-log writer helper.
+  - `apps/macos-helper/Sources/OpenRamble/CaptureEngine.swift` — save failed entries from the compiler-stage path; update banner copy.
+  - `apps/macos-helper/Sources/OpenRamble/PromptHistory.swift` — render status badge, failure reason, and expanded copy-log affordance.
+  - `apps/macos-helper/Tests/OpenRambleTests/PromptHistoryTests.swift` — new tests for failed-entry persistence, decode-with-missing-status, and view rendering.
+- **Data**: New `compiler-error.log` artifact written into existing run directories. Existing `~/.open-ramble/history.json` files remain readable (legacy entries decode as `status: success`).
 - **APIs / dependencies**: None. No new third-party libraries; SwiftUI/AppKit only.
 - **PRD**: `PRD.md` does not document the history feature today. The new `prompt-history` capability spec becomes the source of truth.

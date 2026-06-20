@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 final class MockProcessRunner: ProcessRunner, @unchecked Sendable {
     var lastArgs: [String] = []
@@ -64,7 +64,7 @@ final class MockOpenCodeServerManager: OpenCodeServerManaging, @unchecked Sendab
 struct CompilerBridgeTests {
 
     private let tempRoot = FileManager.default.temporaryDirectory
-        .appendingPathComponent("openvysta-tests-")
+        .appendingPathComponent("open-ramble-tests-")
         .appendingPathComponent(UUID().uuidString)
 
     @Test func repoRootUsesBundlePathWhenCurrentDirectoryIsOutsideRepo() throws {

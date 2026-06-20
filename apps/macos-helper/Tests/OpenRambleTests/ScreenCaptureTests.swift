@@ -1,6 +1,6 @@
 import ScreenCaptureKit
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct ScreenCaptureTests {
 
@@ -34,9 +34,9 @@ struct ScreenCaptureTests {
     }
 
     @Test func localRecordingPathUsesActiveRunDirectory() {
-        let runDir = URL(fileURLWithPath: "/tmp/vysta-test-run")
+        let runDir = URL(fileURLWithPath: "/tmp/ramble-test-run")
         let recordingURL = ScreenCapture.recordingURL(for: runDir)
-        #expect(recordingURL.path == "/tmp/vysta-test-run/capture-original.mov")
+        #expect(recordingURL.path == "/tmp/ramble-test-run/capture-original.mov")
     }
 
     @Test func testOnErrorPropagatesFromStreamDelegate() {
@@ -46,7 +46,7 @@ struct ScreenCaptureTests {
             captured = error
         }
 
-        let expected = NSError(domain: "ai.openvysta.test", code: 42)
+        let expected = NSError(domain: "ai.open-ramble.test", code: 42)
         let dummyStream = Self.makeDummySCStream()
         capture.stream(dummyStream, didStopWithError: expected)
 

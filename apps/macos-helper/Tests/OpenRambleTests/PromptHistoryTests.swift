@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct PromptHistoryTests {
 
@@ -127,7 +127,7 @@ struct PromptHistoryTests {
     @MainActor @Test func promptHistoryManagerCopyLogCopiesFileContents() throws {
         let manager = PromptHistoryManager()
         let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("vysta-copyLog-\(UUID().uuidString).log")
+            .appendingPathComponent("ramble-copyLog-\(UUID().uuidString).log")
         defer { try? FileManager.default.removeItem(at: tempURL) }
 
         let expectedContents = "compiler-error-log-\(UUID().uuidString)"

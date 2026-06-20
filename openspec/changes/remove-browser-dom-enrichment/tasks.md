@@ -4,7 +4,7 @@
 - [ ] 1.2 Remove `browserMetadataPath`, browser input paths, browser JSON parsing, hidden-context browser fields, and scout-derived `Likely Targets` generation from `src/compiler/compile.ts`.
 - [ ] 1.3 Remove browser metadata staging, manifest fields/markdown section, and `browserMetadataIncluded` send audit fields from `src/compiler/artifacts.ts`.
 - [ ] 1.4 Remove `scanBrowserMetadata` and its tests from `src/compiler/redact.ts` and `src/__tests__/redact.test.ts`.
-- [ ] 1.5 Remove `--browser` from CLI help and add an early, clear, non-zero failure when legacy `--browser` is passed to `openvysta compile`, before browser file existence checks or artifact staging.
+- [ ] 1.5 Remove `--browser` from CLI help and add an early, clear, non-zero failure when legacy `--browser` is passed to `open-ramble compile`, before browser file existence checks or artifact staging.
 
 ## 2. Browser Extension, Scout, Fixtures, And Tests
 
@@ -17,7 +17,7 @@
 
 ## 3. Swift Helper Contract
 
-- [ ] 3.1 Remove `BrowserEntry` and `ArtifactManifest.browserMetadata` from `apps/macos-helper/Sources/OpenVysta/Types.swift`.
+- [ ] 3.1 Remove `BrowserEntry` and `ArtifactManifest.browserMetadata` from `apps/macos-helper/Sources/OpenRamble/Types.swift`.
 - [ ] 3.2 Remove `browserMetadataPath` from `CaptureEngine.CompileRequest`, `captureCompileRequest`, and the compile invocation path.
 - [ ] 3.3 Remove `browserMetadataPath` from `CompilerBridgeProtocol.compile`, `CompilerBridge.compile`, and process argument construction.
 - [ ] 3.4 Update Swift tests and mocks to match the new compile signature and manifest shape.
@@ -30,7 +30,7 @@
 - [ ] 4.2 Update `PRD.md` to remove browser enrichment from product promise, architecture, data model, phases, accepted input contract, MVP criteria, risks, recommended next step, and research references.
 - [ ] 4.3 Update `AGENTS.md` to remove guidance that treats browser/DOM enrichment as required, preferred, or a product weakness to fix.
 - [ ] 4.4 Review and update all other tracked docs, including `TODO-opensource.md`, so no doc asks contributors to package, preserve, or improve the browser extension.
-- [ ] 4.5 Add concise replacement language: OpenVysta is a speech + screenshot/keyframe + cursor intent compiler, not a DOM operator or browser-context product.
+- [ ] 4.5 Add concise replacement language: Open-Ramble is a speech + screenshot/keyframe + cursor intent compiler, not a DOM operator or browser-context product.
 
 ## 5. Verification
 

@@ -66,7 +66,7 @@ The compiler's quality gate MUST reject any visible prompt that contains the lit
 The CLI MUST emit a one-line warning to the user when the run is started without any cursor events in the run root. The warning MUST name the failure mode (deictic references may be unresolved) and MUST NOT block the run. The warning is user-visible honesty, not a gate.
 
 #### Scenario: Manual CLI run with empty cursor timeline prints the warning
-- **WHEN** the user invokes `openvysta compile --transcript ... --screenshots ...` with no `cursor-timeline.json` or with an empty one
+- **WHEN** the user invokes `open-ramble compile --transcript ... --screenshots ...` with no `cursor-timeline.json` or with an empty one
 - **THEN** the CLI prints `Warning: No cursor events. Deictic references may be unresolved.` before any other output
 
 #### Scenario: Native capture with a non-empty cursor timeline does not print the warning
@@ -77,11 +77,11 @@ The CLI MUST emit a one-line warning to the user when the run is started without
 The compiler MUST NOT generate the pre-enrichment `visible-prompt.md` template. When the user explicitly disables enrichment with `--enrich false`, the CLI MUST write an empty stub `visible-prompt.md` (or no file) and surface a clear notice that no enriched prompt was produced. The functions `generateVisiblePrompt`, `trimTranscript`, `buildTranscriptEvidence`, and `extractChanges` in `src/compiler/compile.ts` MUST be removed because they only feed the deleted wireframe and have no other callers.
 
 #### Scenario: --enrich false produces no template prompt
-- **WHEN** the user invokes `openvysta compile --transcript ... --screenshots ... --enrich false`
+- **WHEN** the user invokes `open-ramble compile --transcript ... --screenshots ... --enrich false`
 - **THEN** the CLI writes an empty `visible-prompt.md` (or no file) at the run root
 - **AND** prints a notice that enrichment was skipped
 
 #### Scenario: Default compile flow does not call the removed functions
-- **WHEN** the user invokes `openvysta compile` without `--enrich false`
+- **WHEN** the user invokes `open-ramble compile` without `--enrich false`
 - **THEN** the enricher path is the only producer of `visible-prompt.md`
 - **AND** the deleted functions are not referenced anywhere in the codebase

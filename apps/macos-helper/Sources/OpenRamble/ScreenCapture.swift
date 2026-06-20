@@ -11,8 +11,8 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecke
     private var assetWriterSessionStarted = false
     private var recordingURL: URL?
 
-    private let bufferQueue = DispatchQueue(label: "ai.openvysta.buffer")
-    private let videoWriterQueue = DispatchQueue(label: "ai.openvysta.video-writer")
+    private let bufferQueue = DispatchQueue(label: "ai.open-ramble.buffer")
+    private let videoWriterQueue = DispatchQueue(label: "ai.open-ramble.video-writer")
     private var frameBuffer: [CapturedFrame] = []
     private let maxBufferSize = 1800
     private var runningFrameIndex = 0
@@ -56,7 +56,7 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecke
         config.queueDepth = 8
 
         stream = SCStream(filter: filter, configuration: config, delegate: self)
-        try stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue(label: "ai.openvysta.screen"))
+        try stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue(label: "ai.open-ramble.screen"))
 
         prepareLocalRecording(width: config.width, height: config.height, runDirectory: runDirectory)
 
@@ -108,7 +108,7 @@ final class ScreenCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecke
         } else {
             let home = FileManager.default.homeDirectoryForCurrentUser
             let iso = ISO8601DateFormatter().string(from: Date())
-            dir = home.appendingPathComponent(".openvysta/runs/vysta_\(iso)/")
+            dir = home.appendingPathComponent(".open-ramble/runs/ramble_\(iso)/")
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         recordingURL = Self.recordingURL(for: dir)

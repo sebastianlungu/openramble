@@ -28,7 +28,7 @@ describe("Handoff", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-handoff-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-handoff-test-"))
     mockPrompt.mockReset()
     mockAppend.mockReset()
   })
@@ -45,7 +45,7 @@ describe("Handoff", () => {
       confidence: "medium" as const,
     },
     runRoot: tmpDir,
-    runId: "vysta_test",
+    runId: "ramble_test",
     opencodeServerUrl: "http://localhost:4096",
     sessionId: "session-1",
   })
@@ -174,7 +174,7 @@ describe("Handoff", () => {
 
   it("never silently drops context - both saved even on failure", async () => {
     // Create a second dir since the beforeEach creates one
-    const failingDir = mkdtempSync(join(tmpdir(), "vysta-handoff-fail-"))
+    const failingDir = mkdtempSync(join(tmpdir(), "ramble-handoff-fail-"))
     try {
       mockPrompt.mockRejectedValueOnce(new Error("Network error"))
       mockAppend.mockRejectedValueOnce(new Error("Network error 2"))

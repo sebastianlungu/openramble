@@ -85,7 +85,7 @@ export function formatBlockerReport(result: ValidationResult): string {
   const lines = [
     "# Capture Blocker",
     "",
-    "OpenVysta could not produce a reliable implementation brief.",
+    "Open-Ramble could not produce a reliable implementation brief.",
     "",
     "## Failed Checks",
     ...failed.map((c) => `- ${c.message}`),

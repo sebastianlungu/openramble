@@ -26,9 +26,9 @@ None. This is a new internal timeout contract; it does not change what the compi
 ## Impact
 
 - **Code**:
-  - `apps/macos-helper/Sources/OpenVysta/CompilerBridge.swift` — replace `DefaultProcessRunner.run`'s sync `waitUntilExit()` with a continuation; add `BoundedProcessRunner`; thread `timeout: Duration` through `compile(...)` and `append-prompt(...)`.
-  - `apps/macos-helper/Sources/OpenVysta/CaptureEngine.swift` — pass the timeout (or rely on the default) at the single `compilerBridge.compile` call site; no behavior change otherwise.
-  - `apps/macos-helper/Tests/OpenVystaTests/CompilerBridgeTests.swift` — new tests for the bounded runner (timeout terminates, normal exit unchanged, deadline is configurable).
+  - `apps/macos-helper/Sources/OpenRamble/CompilerBridge.swift` — replace `DefaultProcessRunner.run`'s sync `waitUntilExit()` with a continuation; add `BoundedProcessRunner`; thread `timeout: Duration` through `compile(...)` and `append-prompt(...)`.
+  - `apps/macos-helper/Sources/OpenRamble/CaptureEngine.swift` — pass the timeout (or rely on the default) at the single `compilerBridge.compile` call site; no behavior change otherwise.
+  - `apps/macos-helper/Tests/OpenRambleTests/CompilerBridgeTests.swift` — new tests for the bounded runner (timeout terminates, normal exit unchanged, deadline is configurable).
 - **Data**: None. No schema changes; no new files persisted.
 - **APIs / dependencies**: None. No new Swift packages.
 - **PRD**: No PRD impact. This is a reliability fix to the existing capture flow, not a product behavior change.

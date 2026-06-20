@@ -4,9 +4,9 @@ The compiler in `src/compiler/enricher.ts` issues a single system prompt to the 
 
 The current `compile.ts:77-114` ships a pre-enrichment wireframe that traces to one call site: `--enrich false`. On every other path the wireframe is overwritten by the validation blocker or never reached. It is dead code that also mislabels the raw transcript as "Observed" — a small bug that the deletion will close. The change is a refactor: tighten the rules, remove the dead code, do not expand the public surface.
 
-The Swift `SCContentFilter` exclusion of the OpenVysta capture banner in `apps/macos-helper/Sources/OpenVysta/ScreenCapture.swift` is **out of scope** for this change. It will be a follow-up. For the manual CLI flow, the visible-prompt forbidden-phrase list is sufficient.
+The Swift `SCContentFilter` exclusion of the Open-Ramble capture banner in `apps/macos-helper/Sources/OpenRamble/ScreenCapture.swift` is **out of scope** for this change. It will be a follow-up. For the manual CLI flow, the visible-prompt forbidden-phrase list is sufficient.
 
-Project-context discovery (`--context auto|file:<path>`) is **out of scope** for this change. It will be a follow-up. Without it, the user must speak their app's context into the transcript (e.g. "rebuild this for my OpenVysta capture screen"). The current change does not require project context to ship.
+Project-context discovery (`--context auto|file:<path>`) is **out of scope** for this change. It will be a follow-up. Without it, the user must speak their app's context into the transcript (e.g. "rebuild this for my Open-Ramble capture screen"). The current change does not require project context to ship.
 
 ## Goals / Non-Goals
 
@@ -105,7 +105,7 @@ The validation gate stays as-is. The new warning is a `console.warn` line printe
 
 ## Migration Plan
 
-1. Land the change behind the existing CLI surface — no new flags, no new env vars, no new artifacts. Users running `openvysta compile` with the same arguments see a stricter visible prompt and, in the worst case, a quality-gate error if the model produces a forbidden phrase.
+1. Land the change behind the existing CLI surface — no new flags, no new env vars, no new artifacts. Users running `open-ramble compile` with the same arguments see a stricter visible prompt and, in the worst case, a quality-gate error if the model produces a forbidden phrase.
 2. If a real production user reports a legitimate use case that the new rules reject, the gate is one file (`enricher.ts:161-209`) and the forbidden list is a literal array — adjustment is a one-line change.
 3. Rollback is a single revert. The change is a refactor of an existing function; there is no schema, no data migration, and no on-disk state.
 

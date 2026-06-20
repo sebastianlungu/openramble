@@ -57,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             button.image = NSImage(
                 systemSymbolName: "record.circle",
-                accessibilityDescription: "OpenVysta"
+                accessibilityDescription: "Open-Ramble"
             )
             button.title = ""
         }
@@ -113,7 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 #endif
 
         menu.addItem(NSMenuItem(
-            title: "Quit OpenVysta",
+            title: "Quit Open-Ramble",
             action: #selector(quit),
             keyEquivalent: "q"
         ))

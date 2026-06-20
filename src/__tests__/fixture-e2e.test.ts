@@ -34,8 +34,8 @@ describe("Fixture E2E", () => {
   let runId: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-e2e-test-"))
-    runId = `vysta_${Date.now()}`
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-e2e-test-"))
+    runId = `ramble_${Date.now()}`
     runRoot = join(tmpDir, "runs", runId)
   })
 

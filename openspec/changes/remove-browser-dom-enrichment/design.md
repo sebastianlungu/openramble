@@ -50,7 +50,7 @@ Remove the browser feature from the public contract in one change: no `--browser
 
 ### D2. Reject legacy browser inputs loudly
 
-After removing `browserMetadataPath` from compile args, explicitly fail when a user passes `--browser` to `openvysta compile`.
+After removing `browserMetadataPath` from compile args, explicitly fail when a user passes `--browser` to `open-ramble compile`.
 
 **Rationale:** the generic argument parser can otherwise accept unknown flags without meaningfully acting on them. A hard failure prevents stale scripts from producing misleading runs.
 

@@ -50,14 +50,14 @@ describe("Redaction", () => {
 
   it("builds redaction report with redactions", () => {
     const result = scanText("Token: sk-proj-test1234567890123456_longkey")
-    const report = buildRedactionReport("vysta_r1", result.entries)
+    const report = buildRedactionReport("ramble_r1", result.entries)
     expect(report.nothingRedacted).toBe(false)
     expect(report.redactions.length).toBeGreaterThan(0)
     expect(report.screenshotWarningShown).toBe(true)
   })
 
   it("builds redaction report without redactions", () => {
-    const report = buildRedactionReport("vysta_r1", [])
+    const report = buildRedactionReport("ramble_r1", [])
     expect(report.nothingRedacted).toBe(true)
     expect(report.redactions).toHaveLength(0)
   })

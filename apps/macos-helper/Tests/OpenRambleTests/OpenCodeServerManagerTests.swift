@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 final class MockManagedServerProcess: ManagedServerProcess, @unchecked Sendable {
     var isRunning = true

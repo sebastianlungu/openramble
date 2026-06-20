@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct CaptureSmokeTests {
 
@@ -12,14 +12,14 @@ struct CaptureSmokeTests {
             #expect(resolved == nil || resolved?.path.contains("ffprobe") == true)
         }
 
-        let missingPath = "/tmp/vysta-ffprobe-missing-\(UUID().uuidString)/ffprobe"
+        let missingPath = "/tmp/ramble-ffprobe-missing-\(UUID().uuidString)/ffprobe"
         let nilLookup: () -> URL? = { nil }
         #expect(FFProbeRunner.locateFFProbe(
             homebrewPath: missingPath,
             pathLookup: nilLookup
         ) == nil)
 
-        let fakePath = URL(fileURLWithPath: "/tmp/vysta-ffprobe-stub-\(UUID().uuidString)/ffprobe")
+        let fakePath = URL(fileURLWithPath: "/tmp/ramble-ffprobe-stub-\(UUID().uuidString)/ffprobe")
         let stubbed: () -> URL? = { fakePath }
         #expect(FFProbeRunner.locateFFProbe(
             homebrewPath: missingPath,
@@ -27,7 +27,7 @@ struct CaptureSmokeTests {
         ) == fakePath)
 
         let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("vysta-ffprobe-test-\(UUID().uuidString)")
+            .appendingPathComponent("ramble-ffprobe-test-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: tempDir) }
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         let fakeBinary = tempDir.appendingPathComponent("ffprobe")

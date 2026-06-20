@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import AVFoundation
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct AudioCaptureTests {
 
@@ -73,7 +73,7 @@ struct AudioCaptureTests {
     @Test func testStopRecordingClosesAVAudioFile() async throws {
         let fileManager = FileManager.default
         let tempRunDir = fileManager.temporaryDirectory
-            .appendingPathComponent("vysta-audio-test-\(UUID().uuidString)")
+            .appendingPathComponent("ramble-audio-test-\(UUID().uuidString)")
         defer { try? fileManager.removeItem(at: tempRunDir) }
 
         let capture = AudioCapture(runDir: tempRunDir)

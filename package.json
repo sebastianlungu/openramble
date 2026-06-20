@@ -1,12 +1,16 @@
 {
-  "name": "openvysta",
+  "name": "open-ramble",
   "version": "0.1.0",
   "type": "module",
   "description": "Zero-friction multimodal intent compiler for coding agents",
+  "bin": {
+    "open-ramble": "./src/index.ts"
+  },
   "dependencies": {
     "@opencode-ai/sdk": "^1.16.2"
   },
   "scripts": {
+    "open-ramble": "bun run src/index.ts",
     "test": "bun test",
     "proof": "bun run src/opencode-bridge/proof.ts",
     "start": "bun run src/index.ts"

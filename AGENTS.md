@@ -1,8 +1,8 @@
-# OpenVysta Agent Guidance
+# Open-Ramble Agent Guidance
 
 ## Product Philosophy
 
-OpenVysta is a zero-friction multimodal intent compiler for coding agents.
+Open-Ramble is a zero-friction multimodal intent compiler for coding agents.
 
 The user should be able to hold a mouse chord, speak naturally while pointing at the screen, release, and get an implementation-ready prompt that proves the system understood what they meant. The product is not a screen recorder, transcript cleaner, bug-report template, dictation tool, or generic prompt generator.
 
@@ -20,7 +20,7 @@ For visual captures, screenshots and image understanding are mandatory. If scree
 
 ## Non-Negotiable Standard
 
-Every visual/UI OpenVysta prompt must answer four questions before asking an implementation agent to code. For non-visual captures, state that visual evidence is not applicable rather than inventing it.
+Every visual/UI Open-Ramble prompt must answer four questions before asking an implementation agent to code. For non-visual captures, state that visual evidence is not applicable rather than inventing it.
 
 | Question | Required Standard | Failure Mode |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ Current as of 2026-06-12. Update this table when fixes land so agents do not opt
 
 | Rank | Importance | Problem | Why It Is Bad | Fix Standard |
 | --- | --- | --- | --- | --- |
-| 1 | Existential | Visual understanding is deferred to the downstream coding agent. | OpenVysta's whole value is doing the multimodal interpretation before handoff. Deferring it makes the product a fancy artifact copier. | The compiler/enricher must summarize visible UI facts from screenshots or explicitly block/ask when it cannot. |
+| 1 | Existential | Visual understanding is deferred to the downstream coding agent. | Open-Ramble's whole value is doing the multimodal interpretation before handoff. Deferring it makes the product a fancy artifact copier. | The compiler/enricher must summarize visible UI facts from screenshots or explicitly block/ask when it cannot. |
 | 2 | Existential | Deictic speech is not resolved. | Requests like "make this like here" are the primary use case. If "this/here" remains unresolved, the prompt is worthless. | Align transcript segments, cursor pauses, clicks, and frames into a short target map. |
 | 3 | Critical | Screenshot timing and cursor coverage gaps are reported but not acted on. | Warning text is not enough; the product must choose better frames or lower confidence. | Missing coverage must trigger re-extraction, clarification, or a visibly low-confidence handoff. |
 | 4 | Critical | The prompt is too safe and too vague. | Safety language without extracted facts creates a bureaucratic prompt that still makes the coding agent guess. | Lead with concrete observed UI structure, then constraints and uncertainty. |
@@ -87,7 +87,7 @@ If the current model cannot see the screenshots, do not pretend. Use one of thes
 Transcript:
 
 ```text
-Can you help me design exactly the same here kind of wanna see this whole set up here but for my app OpenVysta so I see my usage
+Can you help me design exactly the same here kind of wanna see this whole set up here but for my app Open-Ramble so I see my usage
 ```
 
 Bad output:
@@ -100,7 +100,7 @@ Why it is bad:
 
 - It ignores the visible source UI.
 - It does not identify what "same" refers to.
-- It forces the implementation agent to do OpenVysta's job.
+- It forces the implementation agent to do Open-Ramble's job.
 - It cannot produce a recognizably similar result because it extracted no structure.
 
 Good output must say something closer to:
@@ -110,14 +110,14 @@ The user is pointing at OpenCode's Go usage/settings page.
 
 Observed UI: dark sparse settings layout, left sidebar navigation, top workspace/account bar, large "GO" product mark, subscription status, Manage Subscription button, instructional callout, three horizontal usage meters for rolling/weekly/monthly usage with reset times, balance-after-limits toggle, and invite/referral section with copy-link field.
 
-Implementation brief: build an OpenVysta usage view modeled on this structure, adapted to capture/product usage: plan/status, capture quota, weekly/monthly usage, reset times, optional overage/balance behavior if the app has it, and referral/invite only if the product already supports it or the user approves it.
+Implementation brief: build an Open-Ramble usage view modeled on this structure, adapted to capture/product usage: plan/status, capture quota, weekly/monthly usage, reset times, optional overage/balance behavior if the app has it, and referral/invite only if the product already supports it or the user approves it.
 ```
 
 The good version does not invent implementation files. It does extract visible structure and makes adaptation boundaries explicit.
 
 ## Prompt Quality Gate
 
-Reject or regenerate any OpenVysta prompt that matches one of these conditions, unless the user explicitly approves a low-confidence handoff. Low-confidence handoffs must prominently name the missing evidence before the task brief.
+Reject or regenerate any Open-Ramble prompt that matches one of these conditions, unless the user explicitly approves a low-confidence handoff. Low-confidence handoffs must prominently name the missing evidence before the task brief.
 
 | Gate | Reject If | Minimum Passing Bar |
 | --- | --- | --- |
@@ -137,11 +137,11 @@ Recommended run score:
 | Uncertainty handling | 15 | Did it avoid fake certainty and ask/block when needed? |
 | UX usefulness | 10 | Would a skilled coding agent produce the intended result without re-prompting? |
 
-Below 80/100 is not good enough for a visual UI request. Below 60/100 means OpenVysta was worse than writing the prompt manually.
+Below 80/100 is not good enough for a visual UI request. Below 60/100 means Open-Ramble was worse than writing the prompt manually.
 
 ## UX Principles For The Product Itself
 
-Use these principles when designing OpenVysta features, especially capture, preview, retry, usage, and prompt handoff flows.
+Use these principles when designing Open-Ramble features, especially capture, preview, retry, usage, and prompt handoff flows.
 
 | Principle | Product Meaning |
 | --- | --- |
@@ -169,11 +169,11 @@ Before writing or refactoring any code, load the matching skill for the file's l
 ## Implementation Rules For This Repo
 
 - Read `PRD.md` before changing product behavior.
-- Preserve the project thesis: OpenVysta compiles multimodal intent into coding-agent-ready instructions.
+- Preserve the project thesis: Open-Ramble compiles multimodal intent into coding-agent-ready instructions.
 - Do not add heavyweight providers, cloud STT, Whisper, or expand native capture scope unless explicitly approved.
 - Do not hardcode OpenCode server URLs, session IDs, user emails, provider credentials, or local absolute paths into source.
 - Do not write to `memory/` or `MEMORY.md`.
-- For macOS helper rebuilds, always install to `/Applications` and stable-sign with `OpenVysta Dev` via `/sign` or `apps/macos-helper/install.sh`; never ad-hoc sign, and if the signing identity changed reset `ScreenCapture` TCC before relaunching.
+- For macOS helper rebuilds, always install to `/Applications` and stable-sign with `Open-Ramble Dev` via `/sign` or `apps/macos-helper/install.sh`; never ad-hoc sign, and if the signing identity changed reset `ScreenCapture` TCC before relaunching.
 - Keep changes small, testable, and artifact-first.
 - Treat screenshot paths as replay evidence, not as proof of visual understanding.
 - Fail loudly at evidence boundaries.

@@ -4,13 +4,13 @@ The macOS helper (`apps/macos-helper/`) is the system-trusted screen/audio/curso
 
 | Subsystem | Source of truth | Concurrency | Artifact |
 |---|---|---|---|
-| `ScreenCapture` (SCStream + AVAssetWriter) | `Date().timeIntervalSince(startDate)` | `DispatchQueue("ai.openvysta.screen")` for sample delivery, `DispatchQueue("ai.openvysta.buffer")` for buffer mutation | `capture-original.mov` |
+| `ScreenCapture` (SCStream + AVAssetWriter) | `Date().timeIntervalSince(startDate)` | `DispatchQueue("ai.open-ramble.screen")` for sample delivery, `DispatchQueue("ai.open-ramble.buffer")` for buffer mutation | `capture-original.mov` |
 | `AudioCapture` (AVAudioEngine + SFSpeechRecognizer) | Same `Date().timeIntervalSince(startDate)` | AVAudioEngine render thread, SFSpeechRecognizer delegate | `inputs/audio/original.m4a`, `transcript.md`, `transcript-segments.json` |
 | `CursorTracker` (NSEvent global/local monitors) | Same `Date().timeIntervalSince(startDate)` | AppKit event monitor callback | `cursor-timeline.json` |
 
 All three share the same `captureStartDate` so timestamps are comparable across artifacts. The `FrameExtractor` reads the screen buffer and the cursor pauses/clicks and selects up to 16 `SelectedFrame`s, which the compiler later turns into the visual evidence section of the prompt.
 
-**Current state (broken):** `ScreenCapture.stream(_:didOutputSampleBuffer:of:)` calls `assetWriterAdaptor?.append(imageBuffer, withPresentationTime:)` synchronously on the `ai.openvysta.screen` queue. For 1080p h264 with `expectsMediaDataInRealTime = true`, the adaptor's internal `CVPixelBufferPool` is drained by the writer and refills slowly. When the pool is empty, `append` blocks. That block happens on the same queue SCStream uses to deliver samples, so the consumer appears stuck, SCStream's `queueDepth=8` ring fills, and SCStream pauses delivery. After ~250ms (8 frames at 30fps) no more frames arrive. The cursor and audio subsystems are unaffected because they have their own queues and threads.
+**Current state (broken):** `ScreenCapture.stream(_:didOutputSampleBuffer:of:)` calls `assetWriterAdaptor?.append(imageBuffer, withPresentationTime:)` synchronously on the `ai.open-ramble.screen` queue. For 1080p h264 with `expectsMediaDataInRealTime = true`, the adaptor's internal `CVPixelBufferPool` is drained by the writer and refills slowly. When the pool is empty, `append` blocks. That block happens on the same queue SCStream uses to deliver samples, so the consumer appears stuck, SCStream's `queueDepth=8` ring fills, and SCStream pauses delivery. After ~250ms (8 frames at 30fps) no more frames arrive. The cursor and audio subsystems are unaffected because they have their own queues and threads.
 
 A secondary bug: `stream(_:didStopWithError:)` is implemented and calls `onError?(error)`, but `screenCapture.onError` is never set in `CaptureEngine.startCapture()`. So if SCStream ever does fail with a real error (TCC revocation, display detach), it is silently dropped. The mirror `audioCapture?.onError` wiring does exist at `CaptureEngine.swift:131-133`.
 
@@ -39,9 +39,9 @@ A tertiary bug: `AudioCapture.stopRecording()` stops the engine, removes the tap
 
 ### D1. Move AVAssetWriter append to a dedicated serial queue
 
-**Decision:** Add a `private let videoWriterQueue = DispatchQueue(label: "ai.openvysta.video-writer")` to `ScreenCapture`. In `stream(_:didOutputSampleBuffer:of:)`, after capturing the `CapturedFrame` into the in-memory `frameBuffer`, dispatch the `assetWriterAdaptor?.append(imageBuffer, withPresentationTime: timestamp)` call onto `videoWriterQueue.async`. The screen queue only does the cheap synchronous `frameBuffer.append` and returns.
+**Decision:** Add a `private let videoWriterQueue = DispatchQueue(label: "ai.open-ramble.video-writer")` to `ScreenCapture`. In `stream(_:didOutputSampleBuffer:of:)`, after capturing the `CapturedFrame` into the in-memory `frameBuffer`, dispatch the `assetWriterAdaptor?.append(imageBuffer, withPresentationTime: timestamp)` call onto `videoWriterQueue.async`. The screen queue only does the cheap synchronous `frameBuffer.append` and returns.
 
-**Rationale:** This is the canonical SCStream + AVAssetWriter real-time pattern. The `ai.openvysta.screen` queue becomes effectively a no-op consumer, so SCStream's `queueDepth=8` ring never fills, and SCStream never pauses. The `videoWriterQueue` is a single-producer queue (only the sample handler dispatches to it) and `AVAssetWriterInputPixelBufferAdaptor` is single-producer-safe per its `AVFoundation` contract.
+**Rationale:** This is the canonical SCStream + AVAssetWriter real-time pattern. The `ai.open-ramble.screen` queue becomes effectively a no-op consumer, so SCStream's `queueDepth=8` ring never fills, and SCStream never pauses. The `videoWriterQueue` is a single-producer queue (only the sample handler dispatches to it) and `AVAssetWriterInputPixelBufferAdaptor` is single-producer-safe per its `AVFoundation` contract.
 
 **Alternatives considered:**
 - *Bump `queueDepth` to 64 or 128.* Doesn't fix the underlying problem: the writer will still block eventually, just after more frames. Also wastes memory.
@@ -75,7 +75,7 @@ screenCapture.onError = { [weak self] error in
 
 ### D4. Add `NSScreenCaptureUsageDescription` to the source `Info.plist`
 
-**Decision:** Add `<key>NSScreenCaptureUsageDescription</key><string>OpenVysta records your screen while the capture hotkey is held so it can compile a prompt for your coding agent.</string>` to `apps/macos-helper/Sources/OpenVysta/Info.plist`, matching the string already present in the installed `/Applications/OpenVysta.app/Contents/Info.plist`.
+**Decision:** Add `<key>NSScreenCaptureUsageDescription</key><string>Open-Ramble records your screen while the capture hotkey is held so it can compile a prompt for your coding agent.</string>` to `apps/macos-helper/Sources/OpenRamble/Info.plist`, matching the string already present in the installed `/Applications/Open-Ramble.app/Contents/Info.plist`.
 
 **Rationale:** The recent `install.sh sync_privacy_keys()` helper reads string keys from the source plist. Without this entry, a clean rebuild would strip the usage description from the installed app and TCC would deny ScreenCapture silently on first run.
 
@@ -96,7 +96,7 @@ screenCapture.onError = { [weak self] error in
 
 ### D6. Add Swift unit tests for the wired behaviors
 
-**Decision:** Add three tests to `apps/macos-helper/Tests/OpenVystaTests/`:
+**Decision:** Add three tests to `apps/macos-helper/Tests/OpenRambleTests/`:
 - `ScreenCaptureTests.testOnErrorPropagatesFromStreamDelegate` — inject a stub `SCStream` (via a protocol seam or by exposing the delegate method through a wrapper) and assert that the registered `onError` closure fires when the stub invokes `didStopWithError`.
 - `CaptureEngineTests.testScreenCaptureErrorWiredToEngineOnError` — using a mock `ScreenCapture` that exposes an `onError` setter, verify that after `engine.start() → triggerToggle()`, the engine's `onError` fires when the mock's `onError` fires.
 - `AudioCaptureTests.testStopRecordingClosesAVAudioFile` — verify that after `stopRecording()` returns, the underlying `audioFile` is `nil`.
@@ -117,7 +117,7 @@ screenCapture.onError = { [weak self] error in
 This is a bug fix with no schema, no API, and no contract changes. Deployment is:
 
 1. Land the change on `main`.
-2. Rebuild `/Applications/OpenVysta.app` via `apps/macos-helper/install.sh` (which also stable-signs with `OpenVysta Dev` per `AGENTS.md`).
+2. Rebuild `/Applications/Open-Ramble.app` via `apps/macos-helper/install.sh` (which also stable-signs with `Open-Ramble Dev` per `AGENTS.md`).
 3. Smoke: open the dev build, run the `#if DEBUG` smoke harness, confirm 10s capture → > 100 frames + valid m4a.
 4. Production: replace the installed `.app`. The next end-user capture will benefit immediately. There is no data migration, no user-visible state change, no rollback path beyond re-installing the previous build.
 

@@ -36,7 +36,7 @@ final class AudioCapture: NSObject, SFSpeechRecognizerDelegate {
             let home = FileManager.default.homeDirectoryForCurrentUser
             let formatter = ISO8601DateFormatter()
             let timestamp = formatter.string(from: Date())
-            let dir = home.appendingPathComponent(".openvysta/runs/vysta_\(timestamp)/inputs/audio")
+            let dir = home.appendingPathComponent(".open-ramble/runs/ramble_\(timestamp)/inputs/audio")
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             recordingURL = dir.appendingPathComponent("original.m4a")
         }

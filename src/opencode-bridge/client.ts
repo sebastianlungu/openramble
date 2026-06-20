@@ -27,7 +27,7 @@ export type PromptModelRef = {
   modelID: string
 }
 
-export const DEFAULT_VYSTA_MODEL = "openai/gpt-5.4"
+export const DEFAULT_OPEN_RAMBLE_MODEL = "openai/gpt-5.4"
 
 export class BridgeError extends Error {
   constructor(message: string) {

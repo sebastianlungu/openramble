@@ -6,7 +6,7 @@ The macOS helper SHALL produce a screen-capture video artifact (`capture-origina
 
 #### Scenario: Ten-second capture produces roughly 300 frames
 - **WHEN** the user holds the capture hotkey for ten seconds while the cursor is moving and the screen is changing
-- **THEN** `~/.openvysta/runs/vysta_*/capture-original.mov` SHALL contain at least 280 frames (allowing 7% drift from the configured 30 fps)
+- **THEN** `~/.open-ramble/runs/ramble_*/capture-original.mov` SHALL contain at least 280 frames (allowing 7% drift from the configured 30 fps)
 - **AND** `ffprobe` SHALL report a duration of at least 9.3 seconds
 
 #### Scenario: SCStream writer does not block the output queue
@@ -59,16 +59,16 @@ The `AudioCapture` class SHALL release its internal `AVAudioFile` reference duri
 
 ### Requirement: Source Info.plist includes NSScreenCaptureUsageDescription
 
-The source `apps/macos-helper/Sources/OpenVysta/Info.plist` SHALL contain an `NSScreenCaptureUsageDescription` key with a non-empty string value that explains why the app needs screen recording permission. After a clean install via `install.sh`, the installed `/Applications/OpenVysta.app/Contents/Info.plist` SHALL also contain that key.
+The source `apps/macos-helper/Sources/OpenRamble/Info.plist` SHALL contain an `NSScreenCaptureUsageDescription` key with a non-empty string value that explains why the app needs screen recording permission. After a clean install via `install.sh`, the installed `/Applications/Open-Ramble.app/Contents/Info.plist` SHALL also contain that key.
 
 #### Scenario: Fresh install preserves the usage description
 - **WHEN** a developer runs `apps/macos-helper/install.sh` on a clean machine
-- **THEN** the resulting `/Applications/OpenVysta.app/Contents/Info.plist` SHALL contain `NSScreenCaptureUsageDescription`
+- **THEN** the resulting `/Applications/Open-Ramble.app/Contents/Info.plist` SHALL contain `NSScreenCaptureUsageDescription`
 - **AND** `tccutil reset ScreenCapture` followed by a first launch SHALL show a system Screen Recording permission prompt (not silently fail)
 
 ### Requirement: Dev-only capture smoke harness
 
-A SwiftUI view named `CaptureSmokeView` SHALL exist under `apps/macos-helper/Sources/OpenVysta/`, gated behind a `#if DEBUG` (or equivalent build-flag) conditional so it is not compiled into release builds. When invoked, the harness SHALL run a 10-second capture against the current screen and report pass/fail based on the .mov frame count and the m4a validity.
+A SwiftUI view named `CaptureSmokeView` SHALL exist under `apps/macos-helper/Sources/OpenRamble/`, gated behind a `#if DEBUG` (or equivalent build-flag) conditional so it is not compiled into release builds. When invoked, the harness SHALL run a 10-second capture against the current screen and report pass/fail based on the .mov frame count and the m4a validity.
 
 #### Scenario: Smoke harness passes after the fix
 - **WHEN** a developer opens the dev build, invokes the smoke harness, and waits 12 seconds
@@ -82,6 +82,6 @@ A SwiftUI view named `CaptureSmokeView` SHALL exist under `apps/macos-helper/Sou
 - **AND** the developer SHALL be able to identify the regression without reading capture subsystem source
 
 #### Scenario: Smoke harness is absent from release builds
-- **WHEN** a release build of OpenVysta is installed
+- **WHEN** a release build of Open-Ramble is installed
 - **THEN** no menu item, button, or gesture SHALL expose the smoke harness to the user
 - **AND** the `CaptureSmokeView` type SHALL NOT be present in the compiled binary

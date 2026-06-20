@@ -201,7 +201,7 @@ Acceptance:
     )
   })
 
-  it("uses the requested OpenVysta model when provided", async () => {
+  it("uses the requested Open-Ramble model when provided", async () => {
     mockProviders.mockResolvedValueOnce({
       data: {
         default: { google: "gemini-3-pro-image-preview" },

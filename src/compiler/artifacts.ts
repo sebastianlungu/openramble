@@ -101,7 +101,7 @@ export function generateArtifactManifest(
 
 export function writeManifestMarkdown(manifest: ArtifactManifest): void {
   const lines = [
-    `# OpenVysta Run: ${manifest.runId}`,
+    `# Open-Ramble Run: ${manifest.runId}`,
     `Created: ${manifest.createdAt}`,
     `Root: ${manifest.rootPath}`,
     "",

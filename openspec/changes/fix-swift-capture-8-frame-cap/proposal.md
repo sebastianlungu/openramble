@@ -2,7 +2,7 @@
 
 The macOS helper's screen capture subsystem deterministically stops delivering frames after exactly 8 frames (~0.27s), regardless of how long the user holds the capture hotkey. The cursor and audio subsystems continue running for the full capture duration, but the screen capture output is unusable for anything past the first quarter-second.
 
-This was confirmed against four independent production runs (`~/.openvysta/runs/vysta_2026-06-14T*/capture-original.mov` all show `nb_frames=8, duration=0.266667s`). Two of those runs also produced a corrupt audio file (`moov atom not found`).
+This was confirmed against four independent production runs (`~/.open-ramble/runs/ramble_2026-06-14T*/capture-original.mov` all show `nb_frames=8, duration=0.266667s`). Two of those runs also produced a corrupt audio file (`moov atom not found`).
 
 The root cause is a synchronous `AVAssetWriterInputPixelBufferAdaptor.append(...)` on the SCStream output queue: the adaptor's CVPixelBufferPool fills after ~8 frames at 1080p/30fps, the append blocks, the SCStream consumer appears stuck, and SCStream's `queueDepth=8` ring buffer fills, pausing delivery indefinitely. The cursor and audio subsystems are unaffected because they live on independent queues and threads.
 
@@ -30,8 +30,8 @@ Without this fix, the entire multimodal temporal alignment story is moot: there 
 
 ## Impact
 
-- **Code**: `apps/macos-helper/Sources/OpenVysta/ScreenCapture.swift`, `CaptureEngine.swift`, `AudioCapture.swift`. New files: a SwiftUI `CaptureSmokeView` under `apps/macos-helper/Sources/OpenVysta/`, exposed only in debug builds.
-- **Build/Install**: `apps/macos-helper/Sources/OpenVysta/Info.plist` gains `NSScreenCaptureUsageDescription`. No new dependencies. No new entitlements.
+- **Code**: `apps/macos-helper/Sources/OpenRamble/ScreenCapture.swift`, `CaptureEngine.swift`, `AudioCapture.swift`. New files: a SwiftUI `CaptureSmokeView` under `apps/macos-helper/Sources/OpenRamble/`, exposed only in debug builds.
+- **Build/Install**: `apps/macos-helper/Sources/OpenRamble/Info.plist` gains `NSScreenCaptureUsageDescription`. No new dependencies. No new entitlements.
 - **APIs**: None. The capture subsystem's external contract (artifact paths, file types) is unchanged.
 - **Users**: Capture hotkey behavior is unchanged on the happy path. On capture failure, the existing error banner now fires for screen-capture errors (previously audio-only). The dev build gains a one-click smoke harness; production users see nothing.
 - **Downstream**: The TS compiler and enrichment pipeline gain nothing new from this change, but stop receiving empty visual context for the bulk of every capture. A follow-up change will add the time-anchored deictic resolution primitive and the BLOCK gate on top of the now-trustworthy capture data.

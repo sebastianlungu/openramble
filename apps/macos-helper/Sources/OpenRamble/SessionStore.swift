@@ -12,8 +12,8 @@ final class SessionStore {
         let dateString = dateFormatter.string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
             .replacingOccurrences(of: ".", with: "-")
-        runId = "vysta_\(dateString)"
-        runDir = home.appendingPathComponent(".openvysta/runs/\(runId)")
+        runId = "ramble_\(dateString)"
+        runDir = home.appendingPathComponent(".open-ramble/runs/\(runId)")
 
         try fileManager.createDirectory(at: runDir, withIntermediateDirectories: true)
         try fileManager.createDirectory(at: runDir.appendingPathComponent("inputs/screenshots"),
@@ -115,7 +115,7 @@ final class SessionStore {
 
     private static let historyDir: URL = {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".openvysta")
+            .appendingPathComponent(".open-ramble")
     }()
 
     private static let historyFile: URL = {

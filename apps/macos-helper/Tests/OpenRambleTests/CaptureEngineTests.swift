@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import AppKit
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct CaptureEngineTests {
 
@@ -39,13 +39,13 @@ struct CaptureEngineTests {
 
     @Test func artifactManifestEncodingOmitsLegacyBrowserField() throws {
         let manifest = ArtifactManifest(
-            runId: "vysta_test",
-            rootPath: "/tmp/vysta_test",
+            runId: "ramble_test",
+            rootPath: "/tmp/ramble_test",
             createdAt: "2026-06-16T00:00:00Z",
             transcript: ArtifactEntry(
                 name: "transcript.md",
                 relativePath: "inputs/transcript.md",
-                absolutePath: "/tmp/vysta_test/inputs/transcript.md",
+                absolutePath: "/tmp/ramble_test/inputs/transcript.md",
                 mimeType: "text/markdown",
                 supplied: true
             ),
@@ -54,11 +54,11 @@ struct CaptureEngineTests {
             screenshots: [],
             hiddenContext: PathEntry(
                 path: "hidden-context.json",
-                absolutePath: "/tmp/vysta_test/hidden-context.json"
+                absolutePath: "/tmp/ramble_test/hidden-context.json"
             ),
             visiblePrompt: PathEntry(
                 path: "visible-prompt.md",
-                absolutePath: "/tmp/vysta_test/visible-prompt.md"
+                absolutePath: "/tmp/ramble_test/visible-prompt.md"
             )
         )
 
@@ -289,7 +289,7 @@ struct CaptureEngineTests {
         let productionWiring = engine.screenCaptureForTesting.onError
         #expect(productionWiring != nil)
 
-        let expected = NSError(domain: "ai.openvysta.test", code: 99)
+        let expected = NSError(domain: "ai.open-ramble.test", code: 99)
         productionWiring?(expected)
 
         #expect(capturedEngineError?.asNSError == expected)
@@ -301,7 +301,7 @@ private extension Error {
     var asNSError: NSError { self as NSError }
 }
 
-/// Backs up and restores the global `~/.openvysta/history.json` for the
+/// Backs up and restores the global `~/.open-ramble/history.json` for the
 /// duration of a test, and creates per-test temp run directories that are
 /// torn down afterwards. Avoids polluting the real history file from tests
 /// that call `saveFailedHistoryEntry` (which writes to the global file as
@@ -314,13 +314,13 @@ private final class HistoryHarness {
 
     init() {
         self.historyURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".openvysta/history.json")
+            .appendingPathComponent(".open-ramble/history.json")
         self.priorContents = (try? Data(contentsOf: historyURL))
     }
 
     func makeTempRunDir() -> URL {
         let dir = fileManager.temporaryDirectory
-            .appendingPathComponent("vysta-test-\(UUID().uuidString)")
+            .appendingPathComponent("ramble-test-\(UUID().uuidString)")
         try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
         tempRoots.append(dir)
         return dir

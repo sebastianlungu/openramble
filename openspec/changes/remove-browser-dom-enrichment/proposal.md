@@ -1,6 +1,6 @@
 ## Why
 
-OpenVysta's core thesis is visual intent compilation from speech, screenshots, cursor timing, and app context. The browser/DOM enrichment path pulls the product toward a browser-context tool, adds permission/privacy surface, and leaves dead code paths (`scout`, `--browser`) that are not currently load-bearing in the main compiler flow.
+Open-Ramble's core thesis is visual intent compilation from speech, screenshots, cursor timing, and app context. The browser/DOM enrichment path pulls the product toward a browser-context tool, adds permission/privacy surface, and leaves dead code paths (`scout`, `--browser`) that are not currently load-bearing in the main compiler flow.
 
 This change removes the browser/DOM feature family entirely so the MVP can stay focused on pixel-grounded prompt quality.
 
@@ -17,7 +17,7 @@ This change removes the browser/DOM feature family entirely so the MVP can stay 
 ## Capabilities
 
 ### New Capabilities
-- `context-input-contract`: Defines the allowed OpenVysta evidence sources and explicitly excludes browser, DOM, route, accessibility-tree, console, network, extension, and browser-driven scout signals.
+- `context-input-contract`: Defines the allowed Open-Ramble evidence sources and explicitly excludes browser, DOM, route, accessibility-tree, console, network, extension, and browser-driven scout signals.
 
 ### Modified Capabilities
 - None. There are no baseline specs under `openspec/specs/` yet.
@@ -25,7 +25,7 @@ This change removes the browser/DOM feature family entirely so the MVP can stay 
 ## Impact
 
 - Affected TypeScript: `src/index.ts`, `src/compiler/compile.ts`, `src/compiler/schema.ts`, `src/compiler/artifacts.ts`, `src/compiler/redact.ts`, related tests and fixtures.
-- Affected Swift: `apps/macos-helper/Sources/OpenVysta/Types.swift`, `CaptureEngine.swift`, `CompilerBridge.swift`, and related tests.
+- Affected Swift: `apps/macos-helper/Sources/OpenRamble/Types.swift`, `CaptureEngine.swift`, `CompilerBridge.swift`, and related tests.
 - Removed code: `apps/browser-extension/`, `src/scout/`, `src/__tests__/scout.test.ts`, browser fixture data.
 - Documentation updates: `PRD.md`, `README.md`, and `AGENTS.md` browser/DOM/scout references.
 - This intentionally breaks any local scripts or old development artifacts depending on `--browser`, `browserMetadata`, `browserContext`, or scout output.

@@ -1,10 +1,10 @@
-# OpenVysta
+# Open-Ramble
 
 > Stop writing prompts manually. Capture what you mean.
 
-OpenVysta is a zero-friction multimodal intent compiler for coding agents. It turns spoken intent, visible UI context, and cursor emphasis into a precise implementation brief your coding agent can execute without guessing.
+Open-Ramble is a zero-friction multimodal intent compiler for coding agents. It turns spoken intent, visible UI context, and cursor emphasis into a precise implementation brief your coding agent can execute without guessing.
 
-The product sits between you and your coding agent. You hold a mouse chord, speak naturally while pointing at anything on screen, release, and OpenVysta returns a grounded prompt over the editor.
+The product sits between you and your coding agent. You hold a mouse chord, speak naturally while pointing at anything on screen, release, and Open-Ramble returns a grounded prompt over the editor.
 
 > [!NOTE]
 > This repository ships the build-complete MVP: a manual compiler + OpenCode bridge that consumes a transcript and screenshots. The native macOS capture helper lives in `apps/macos-helper/` as the next-phase capture client.
@@ -35,16 +35,18 @@ Install with [Bun](https://bun.sh):
 bun install
 ```
 
-Run the compiler against a transcript and screenshots:
+Run the compiler from the checked-out repo against a transcript and screenshots:
 
 ```bash
-openvysta compile \
+bun run open-ramble compile \
   --transcript ./input.md \
   --screenshots ./shots/1.png ./shots/2.png ./shots/3.png \
   --opencode-server http://localhost:4096 \
   --session-id <opencode-session> \
-  --out ./.openvysta/runs
+  --out ./.open-ramble/runs
 ```
+
+If you install or link the package as a binary, the command name is `open-ramble`.
 
 The CLI runs the validation gate, enriches the prompt with an image-capable model, opens an interactive preview (`Send` / `Retry` / `Cancel`), and appends the result to your OpenCode TUI.
 
@@ -53,7 +55,7 @@ The CLI runs the validation gate, enriches the prompt with an image-capable mode
 
 ## CLI
 
-### `openvysta compile`
+### `open-ramble compile`
 
 | Flag | Description |
 | --- | --- |
@@ -64,14 +66,14 @@ The CLI runs the validation gate, enriches the prompt with an image-capable mode
 | `--model <model>` | Override the enrichment model. Default: `openai/gpt-5.4`. |
 | `--opencode-server <url>` | Default: `http://localhost:4096`. |
 | `--session-id <id>` | Default: `OPENCODE_SESSION_ID` env. |
-| `--out <path>` | Output directory. Default: `./.openvysta/runs`. |
+| `--out <path>` | Output directory. Default: `./.open-ramble/runs`. |
 | `--enrich false` | Skip AI visual compilation; write artifacts only. |
 | `--no-preview` | Skip the interactive preview. |
 | `--auto-send` | Send to OpenCode without preview. |
 
 Legacy browser metadata input is intentionally unsupported. The compile command fails loudly if a removed browser flag is passed.
 
-### `openvysta append-prompt`
+### `open-ramble append-prompt`
 
 Re-send a previously compiled prompt from a run folder. Useful when OpenCode handoff originally failed and you want to retry without recompiling.
 
@@ -88,7 +90,7 @@ Re-send a previously compiled prompt from a run folder. Useful when OpenCode han
 Every run produces an audit-ready artifact folder:
 
 ```text
-.openvysta/runs/vysta_<timestamp>/
+.open-ramble/runs/ramble_<timestamp>/
   inputs/
     transcript.md
     audio/                    (if supplied)
@@ -127,7 +129,7 @@ apps/
 
 ## Product boundary
 
-OpenVysta is a speech + screenshot/keyframe + cursor intent compiler. It is not a DOM operator or browser-context product.
+Open-Ramble is a speech + screenshot/keyframe + cursor intent compiler. It is not a DOM operator or browser-context product.
 
 The accepted evidence contract is:
 
@@ -141,13 +143,13 @@ Browser DOM, route, accessibility-tree, console, network, and browser-extension 
 
 ## Visual grounding contract
 
-OpenVysta must summarize visible UI facts from screenshots before handing off to the coding agent. The downstream agent should never have to inspect images for the first time.
+Open-Ramble must summarize visible UI facts from screenshots before handing off to the coding agent. The downstream agent should never have to inspect images for the first time.
 
 Runs are blocked if grounding evidence is insufficient. See `src/compiler/validate.ts` for the current checks.
 
 ## OpenCode integration
 
-OpenVysta is OpenCode-first and uses three OpenCode APIs:
+Open-Ramble is OpenCode-first and uses three OpenCode APIs:
 
 | Capability | Use |
 | --- | --- |
@@ -155,11 +157,11 @@ OpenVysta is OpenCode-first and uses three OpenCode APIs:
 | `client.session.prompt` with `noReply: true` | Inject hidden context into the session without triggering an assistant response. |
 | `client.config.get` | Discover model capabilities and pick an image-capable fallback. |
 
-If OpenCode handoff fails, OpenVysta writes the artifacts to disk and preserves the prompt locally.
+If OpenCode handoff fails, Open-Ramble writes the artifacts to disk and preserves the prompt locally.
 
 ## Privacy
 
-OpenVysta is local-first. Captures stay on your machine in `./.openvysta/runs/` and `~/.openvysta/`. Transcript text is scanned for likely secrets before any model call, and a redaction report is written to every run.
+Open-Ramble is local-first. Captures stay on your machine in `./.open-ramble/runs/` and `~/.open-ramble/`. Transcript text is scanned for likely secrets before any model call, and a redaction report is written to every run.
 
 ## Development
 

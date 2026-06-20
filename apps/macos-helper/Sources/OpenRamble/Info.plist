@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Open-Ramble needs microphone access to record and transcribe your voice for capturing context.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Open-Ramble uses speech recognition to transcribe your spoken instructions.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Open-Ramble records your screen while the capture hotkey is held so it can compile a prompt for your coding agent.</string>
+</dict>
+</plist>

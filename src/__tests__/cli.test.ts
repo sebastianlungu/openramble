@@ -10,11 +10,30 @@ describe("CLI", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-cli-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-cli-test-"))
   })
 
   afterEach(() => {
     rmSync(tmpDir, { recursive: true, force: true })
+  })
+
+  it("exposes the renamed repo-local CLI entrypoint", async () => {
+    const proc = Bun.spawn(["bun", "run", "open-ramble"], {
+      cwd: resolve("."),
+      env: { ...process.env, OPENCODE_SESSION_ID: "" },
+      stdout: "pipe",
+      stderr: "pipe",
+    })
+
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ])
+
+    expect(exitCode).toBe(0)
+    expect(stderr).toContain("bun run src/index.ts")
+    expect(stdout).toContain("Usage: bun run open-ramble compile [options]")
   })
 
   it("rejects the legacy browser flag when the file exists", async () => {
@@ -54,7 +73,7 @@ describe("CLI", () => {
     expect(exitCode).toBe(1)
     expect(stderr).toContain("browser metadata")
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("ramble_"))
     for (const dir of runDirs) {
       expect(existsSync(join(tmpDir, dir, "inputs", "browser.json"))).toBe(false)
       expect(existsSync(join(tmpDir, dir, "visible-prompt.md"))).toBe(false)
@@ -97,7 +116,7 @@ describe("CLI", () => {
     expect(exitCode).toBe(1)
     expect(stderr).toContain("browser metadata")
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("ramble_"))
     expect(runDirs).toHaveLength(0)
   })
 
@@ -139,7 +158,7 @@ describe("CLI", () => {
   })
 
   it("writes directly into a concrete macOS run directory", async () => {
-    const runDir = join(tmpDir, "vysta_2026-06-10T21-04-36Z")
+    const runDir = join(tmpDir, "ramble_2026-06-10T21-04-36Z")
     const proc = Bun.spawn([
       "bun",
       "run",
@@ -174,11 +193,11 @@ describe("CLI", () => {
     expect(stderr).toBe("")
     expect(stdout).toContain(`Run folder: ${resolve(runDir)}`)
     expect(existsSync(join(runDir, "visible-prompt.md"))).toBe(true)
-    expect(readdirSync(runDir).some((name) => name.startsWith("vysta_"))).toBe(false)
+    expect(readdirSync(runDir).some((name) => name.startsWith("ramble_"))).toBe(false)
   })
 
-  it("creates a nested run directory under a vysta-prefixed parent directory", async () => {
-    const parentDir = join(tmpDir, "vysta_runs")
+  it("creates a nested run directory under a ramble-prefixed parent directory", async () => {
+    const parentDir = join(tmpDir, "ramble_runs")
     const proc = Bun.spawn([
       "bun",
       "run",
@@ -212,7 +231,7 @@ describe("CLI", () => {
     expect(stderr).toBe("")
     expect(existsSync(join(parentDir, "visible-prompt.md"))).toBe(false)
 
-    const runDirs = readdirSync(parentDir).filter((name) => /^vysta_\d{13}$/.test(name))
+    const runDirs = readdirSync(parentDir).filter((name) => /^ramble_\d{13}$/.test(name))
     expect(runDirs.length).toBe(1)
     expect(existsSync(join(parentDir, runDirs[0]!, "visible-prompt.md"))).toBe(true)
   })
@@ -222,7 +241,7 @@ describe("CLI", () => {
   }
 
   function firstRunDir(): string {
-    return readdirSync(tmpDir).find((name) => name.startsWith("vysta_")) ?? ""
+    return readdirSync(tmpDir).find((name) => name.startsWith("ramble_")) ?? ""
   }
 })
 
@@ -230,7 +249,7 @@ describe("CLI append-prompt", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-append-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-append-test-"))
   })
 
   afterEach(() => {
@@ -331,7 +350,7 @@ describe("CLI compile --enrich", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-enrich-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-enrich-test-"))
   })
 
   afterEach(() => {
@@ -445,7 +464,7 @@ describe("CLI compile --enrich", () => {
       proc.exited,
     ])
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("ramble_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     const runRecord = JSON.parse(readFileSync(join(runRoot, "run.json"), "utf-8"))
 
@@ -486,7 +505,7 @@ describe("CLI compile --enrich", () => {
       proc.exited,
     ])
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("ramble_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     const runRecord = JSON.parse(readFileSync(join(runRoot, "run.json"), "utf-8"))
 
@@ -522,7 +541,7 @@ describe("CLI compile --enrich", () => {
 
     await proc.exited
 
-    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("vysta_"))
+    const runDirs = readdirSync(tmpDir).filter((name) => name.startsWith("ramble_"))
     const runRoot = join(tmpDir, runDirs[0]!)
     expect(existsSync(join(runRoot, "hidden-context.json"))).toBe(true)
     const hiddenCtx = JSON.parse(readFileSync(join(runRoot, "hidden-context.json"), "utf-8"))

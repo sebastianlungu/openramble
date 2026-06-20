@@ -1,6 +1,6 @@
 ## Context
 
-`PromptHistoryEntry` is a flat `Codable` struct persisted as a JSON array at `~/.openvysta/history.json`. It is written from exactly one site (`CaptureEngine.showCompletion`, line 303) and only when `compiled?.promptDraft` is non-nil. Three branches drop a run on the floor today:
+`PromptHistoryEntry` is a flat `Codable` struct persisted as a JSON array at `~/.open-ramble/history.json`. It is written from exactly one site (`CaptureEngine.showCompletion`, line 303) and only when `compiled?.promptDraft` is non-nil. Three branches drop a run on the floor today:
 
 1. `compiled?.errors` non-empty → banner only.
 2. `compiled?.promptDraft == nil` *and* `compiled?.errors` empty → banner says "Prompt compiled. Ready to paste." even though no prompt exists.
@@ -8,7 +8,7 @@
 
 `PromptHistoryView` (a SwiftUI popover anchored on the menubar item) renders entries grouped by day with title, prompt preview, timestamp, View/Hide toggle, and Copy button.
 
-The capture pipeline writes durable artifacts to `runDir = ~/.openvysta/runs/<runId>/` regardless of compiler outcome (transcript, screenshots, cursor timeline, manifest). The compiler subprocess output is currently lost after the `Process` exits — only the first line of stderr survives in `CompilerOutput.errors`.
+The capture pipeline writes durable artifacts to `runDir = ~/.open-ramble/runs/<runId>/` regardless of compiler outcome (transcript, screenshots, cursor timeline, manifest). The compiler subprocess output is currently lost after the `Process` exits — only the first line of stderr survives in `CompilerOutput.errors`.
 
 User answers on 2026-06-13 locked these choices:
 
@@ -26,7 +26,7 @@ User answers on 2026-06-13 locked these choices:
 - Make every compiler-stage failure visible and durable in the menubar history popover, with the same shape and ergonomics as a successful entry.
 - Preserve the raw error log for debugging without dumping stack traces into the user-facing row.
 - Maintain backward compatibility with the existing on-disk `history.json` format so users running dev builds today do not lose their history on upgrade.
-- Keep the diff small and reversible; isolate the change to the four files in `apps/macos-helper/Sources/OpenVysta/`.
+- Keep the diff small and reversible; isolate the change to the four files in `apps/macos-helper/Sources/OpenRamble/`.
 
 **Non-Goals:**
 
@@ -102,7 +102,7 @@ Inline mixed list, calm orange `Failed` pill rendered next to the title using `C
 - **Risk:** users with long-running history files (months of usage) might see a sudden flood of new failed entries on first upgrade if past runs were silently failing.
   - **Mitigation:** failures are written prospectively only; the upgrade adds zero retroactive entries.
 
-- **Risk:** the log file path stored in `failure.errorLogPath` becomes stale if the user deletes `~/.openvysta/runs/<runId>/`.
+- **Risk:** the log file path stored in `failure.errorLogPath` becomes stale if the user deletes `~/.open-ramble/runs/<runId>/`.
   - **Mitigation:** the expanded view's **Copy log** button checks `FileManager.fileExists` before reading; if missing, it shows the short reason as a fallback and disables the button.
 
 - **Risk:** orange pill could blend with system dark-mode chrome on certain accent themes.

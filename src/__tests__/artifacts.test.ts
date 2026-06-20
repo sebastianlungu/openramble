@@ -25,7 +25,7 @@ describe("Artifacts", () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), "vysta-artifact-test-"))
+    tmpDir = mkdtempSync(join(tmpdir(), "ramble-artifact-test-"))
   })
 
   afterEach(() => {
@@ -33,21 +33,21 @@ describe("Artifacts", () => {
   })
 
   it("creates run folder", () => {
-    const dir = join(tmpDir, "runs", "vysta_test123")
+    const dir = join(tmpDir, "runs", "ramble_test123")
     const created = createRunFolder(dir)
     expect(created).toBe(true)
     expect(existsSync(dir)).toBe(true)
   })
 
   it("returns false if run folder already exists", () => {
-    const dir = join(tmpDir, "runs", "vysta_test123")
+    const dir = join(tmpDir, "runs", "ramble_test123")
     createRunFolder(dir)
     const second = createRunFolder(dir)
     expect(second).toBe(false)
   })
 
   it("sets up artifact directories", () => {
-    const dir = join(tmpDir, "runs", "vysta_test456")
+    const dir = join(tmpDir, "runs", "ramble_test456")
     createRunFolder(dir)
     setupArtifactDirs(dir)
 
@@ -57,7 +57,7 @@ describe("Artifacts", () => {
   })
 
   it("copies transcript", () => {
-    const destDir = join(tmpDir, "runs", "vysta_copy_test")
+    const destDir = join(tmpDir, "runs", "ramble_copy_test")
     createRunFolder(destDir)
     setupArtifactDirs(destDir)
 
@@ -71,7 +71,7 @@ describe("Artifacts", () => {
   })
 
   it("generates artifact manifest with correct shape", () => {
-    const runRoot = join(tmpDir, "runs", "vysta_manifest_test")
+    const runRoot = join(tmpDir, "runs", "ramble_manifest_test")
     const paths = buildInputPaths({
       transcript: "test",
       screenshotPaths: ["/tmp/s1.png", "/tmp/s2.png"],
@@ -84,11 +84,11 @@ describe("Artifacts", () => {
       screenshotPaths: ["/tmp/s1.png", "/tmp/s2.png"],
       videoPath: "/tmp/capture-original.mov",
       runRoot,
-      runId: "vysta_test",
+      runId: "ramble_test",
       paths,
     })
 
-    expect(manifest.runId).toBe("vysta_test")
+    expect(manifest.runId).toBe("ramble_test")
     expect(manifest.transcript.supplied).toBe(true)
     expect(manifest.screenshots).toHaveLength(2)
     expect(manifest.video?.supplied).toBe(true)
@@ -97,7 +97,7 @@ describe("Artifacts", () => {
   })
 
   it("manifest has no removed browser-metadata field", () => {
-    const runRoot = join(tmpDir, "runs", "vysta_no_browser_field")
+    const runRoot = join(tmpDir, "runs", "ramble_no_browser_field")
     const paths = buildInputPaths({
       transcript: "test",
       screenshotPaths: ["/tmp/s1.png"],
@@ -108,7 +108,7 @@ describe("Artifacts", () => {
       transcriptPath: join(tmpDir, "transcript.md"),
       screenshotPaths: ["/tmp/s1.png"],
       runRoot,
-      runId: "vysta_test",
+      runId: "ramble_test",
       paths,
     })
 
@@ -117,7 +117,7 @@ describe("Artifacts", () => {
 
   it("generates run record", () => {
     const record = generateRunRecord(
-      "vysta_001",
+      "ramble_001",
       "/tmp/run",
       { providerId: "test", modelId: "test-model" },
       "session-123",
@@ -127,7 +127,7 @@ describe("Artifacts", () => {
       true,
     )
 
-    expect(record.runId).toBe("vysta_001")
+    expect(record.runId).toBe("ramble_001")
     expect(record.model.providerId).toBe("test")
     expect(record.inputCounts.screenshots).toBe(3)
     expect(record.inputCounts.transcriptWords).toBe(50)
@@ -135,7 +135,7 @@ describe("Artifacts", () => {
   })
 
   it("generates redaction report with defaults", () => {
-    const report = buildRedactionReport("vysta_001", [])
+    const report = buildRedactionReport("ramble_001", [])
     expect(report.nothingRedacted).toBe(true)
     expect(report.warnings.length).toBeGreaterThan(0)
     expect(report.screenshotWarningShown).toBe(true)
@@ -143,7 +143,7 @@ describe("Artifacts", () => {
 
   it("generates sent-to-model record", () => {
     const sent = generateSentToModel(
-      "vysta_001",
+      "ramble_001",
       { providerId: "test", modelId: "m1" },
       "transcript content",
       ["/tmp/test1.png", "/tmp/test2.png"],
@@ -165,7 +165,7 @@ describe("Artifacts", () => {
   })
 
   it("does not fail when screenshots are already staged", () => {
-    const runRoot = join(tmpDir, "runs", "vysta_already_staged")
+    const runRoot = join(tmpDir, "runs", "ramble_already_staged")
     const paths = buildInputPaths({
       transcript: "test",
       screenshotPaths: ["frame_start_1.png"],
@@ -182,14 +182,14 @@ describe("Artifacts", () => {
       transcriptPath,
       screenshotPaths: [paths.screenshots[0]!.abs],
       runRoot,
-      runId: "vysta_already_staged",
+      runId: "ramble_already_staged",
       paths,
     })).not.toThrow()
     expect(readFileSync(paths.screenshots[0]!.abs, "utf-8")).toBe("fake png")
   })
 
   it("does not try to copy missing screenshots onto themselves", () => {
-    const runRoot = join(tmpDir, "runs", "vysta_missing_staged")
+    const runRoot = join(tmpDir, "runs", "ramble_missing_staged")
     const paths = buildInputPaths({
       transcript: "test",
       screenshotPaths: ["frame_start_1.png"],
@@ -204,7 +204,7 @@ describe("Artifacts", () => {
       transcriptPath,
       screenshotPaths: [paths.screenshots[0]!.abs],
       runRoot,
-      runId: "vysta_missing_staged",
+      runId: "ramble_missing_staged",
       paths,
     })).not.toThrow()
   })

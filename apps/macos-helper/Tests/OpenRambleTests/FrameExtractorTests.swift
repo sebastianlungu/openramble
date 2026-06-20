@@ -1,6 +1,6 @@
 import Testing
 import CoreVideo
-@testable import OpenVysta
+@testable import OpenRamble
 
 struct FrameExtractorTests {
 

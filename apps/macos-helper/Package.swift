@@ -2,21 +2,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "OpenVysta",
+    name: "OpenRamble",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "openvysta", targets: ["OpenVysta"])
+        .executable(name: "open-ramble", targets: ["OpenRamble"])
     ],
     targets: [
         .executableTarget(
-            name: "OpenVysta",
-            path: "Sources/OpenVysta",
+            name: "OpenRamble",
+            path: "Sources/OpenRamble",
             exclude: ["Info.plist"]
         ),
         .testTarget(
-            name: "OpenVystaTests",
-            dependencies: ["OpenVysta"],
-            path: "Tests/OpenVystaTests"
+            name: "OpenRambleTests",
+            dependencies: ["OpenRamble"],
+            path: "Tests/OpenRambleTests"
         )
     ]
 )

@@ -1,12 +1,12 @@
 ## Context
 
-The macOS helper spawns `bun run src/index.ts compile` (and `append-prompt`) as a `Foundation.Process` from `CompilerBridge.runCompilerProcess`. Today, `DefaultProcessRunner.run` (`apps/macos-helper/Sources/OpenVysta/CompilerBridge.swift:32`) does three things on the caller's thread:
+The macOS helper spawns `bun run src/index.ts compile` (and `append-prompt`) as a `Foundation.Process` from `CompilerBridge.runCompilerProcess`. Today, `DefaultProcessRunner.run` (`apps/macos-helper/Sources/OpenRamble/CompilerBridge.swift:32`) does three things on the caller's thread:
 
 1. Assigns a `Pipe` to `process.standardError`.
 2. Calls `try process.run()` then `process.waitUntilExit()` synchronously.
 3. Reads the remaining stderr to EOF and returns `ProcessResult(terminationStatus:, stderrData:)`.
 
-`process.waitUntilExit()` blocks indefinitely if the child never exits. This is the failure mode observed in production: a model provider hangs, the OpenCode server's HTTP response stalls, the `bun` process sits in `kevent64` on a connected socket, the Swift side blocks, and the floating "Processing" banner never advances to the success or failure branch in `CaptureEngine.showCompletion` (`apps/macos-helper/Sources/OpenVysta/CaptureEngine.swift:295`).
+`process.waitUntilExit()` blocks indefinitely if the child never exits. This is the failure mode observed in production: a model provider hangs, the OpenCode server's HTTP response stalls, the `bun` process sits in `kevent64` on a connected socket, the Swift side blocks, and the floating "Processing" banner never advances to the success or failure branch in `CaptureEngine.showCompletion` (`apps/macos-helper/Sources/OpenRamble/CaptureEngine.swift:295`).
 
 The product already has a "compiler failure" path in `showCompletion` that produces a `failed` History entry and a `Failed — saved to History` banner. We need to route timeout outcomes into that same path, not invent a new UI state.
 

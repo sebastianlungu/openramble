@@ -3,10 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-APP="/Applications/OpenVysta.app"
-BINARY="$SCRIPT_DIR/.build/release/openvysta"
-SIGN_IDENTITY="${SIGN_IDENTITY:-OpenVysta Dev}"
-BUNDLE_ID="ai.openvysta.macos-helper"
+APP="/Applications/Open-Ramble.app"
+BINARY="$SCRIPT_DIR/.build/release/open-ramble"
+SIGN_IDENTITY="${SIGN_IDENTITY:-Open-Ramble Dev}"
+BUNDLE_ID="ai.open-ramble.macos-helper"
 LOGIN_KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 SIGNING_DIR="/tmp/oc"
 SIGNING_CERT="$SIGNING_DIR/cert.pem"
@@ -63,7 +63,7 @@ expected_leaf_hash() {
 }
 
 sync_privacy_keys() {
-  local source_plist="$SCRIPT_DIR/Sources/OpenVysta/Info.plist"
+  local source_plist="$SCRIPT_DIR/Sources/OpenRamble/Info.plist"
   local target_plist="$APP/Contents/Info.plist"
 
   if [ ! -f "$source_plist" ]; then
@@ -133,14 +133,14 @@ if [ ! -x "$BINARY" ]; then
   exit 1
 fi
 
-echo "Killing running OpenVysta..."
-pkill -f "OpenVysta.app" 2>/dev/null || true
+echo "Killing running Open-Ramble..."
+pkill -f "Open-Ramble.app" 2>/dev/null || true
 sleep 1
 
 reset_screen_recording_if_identity_changed
 
 echo "Installing binary..."
-cp "$BINARY" "$APP/Contents/MacOS/openvysta"
+cp "$BINARY" "$APP/Contents/MacOS/open-ramble"
 
 echo "Syncing Info.plist privacy keys from source..."
 sync_privacy_keys
@@ -148,8 +148,8 @@ sync_privacy_keys
 /usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$APP/Contents/Info.plist" >/dev/null
 
 echo "Stamping repo root: $REPO_ROOT"
-/usr/libexec/PlistBuddy -c "Set :OpenVystaRepoRoot $REPO_ROOT" "$APP/Contents/Info.plist" 2>/dev/null || \
-  /usr/libexec/PlistBuddy -c "Add :OpenVystaRepoRoot string $REPO_ROOT" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :OpenRambleRepoRoot $REPO_ROOT" "$APP/Contents/Info.plist" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :OpenRambleRepoRoot string $REPO_ROOT" "$APP/Contents/Info.plist"
 
 echo "Signing with stable identity: $SIGN_IDENTITY..."
 codesign --force --sign "$SIGN_IDENTITY" \
@@ -161,6 +161,6 @@ echo "Verifying signature..."
 codesign --verify --verbose "$APP" && echo "Signature valid."
 
 echo ""
-echo "Done. Run: open -a OpenVysta"
+echo "Done. Run: open -a Open-Ramble"
 echo ""
 echo "TCC permissions persist across rebuilds with this signing identity, and Screen Recording is reset automatically if the signing identity changed."
