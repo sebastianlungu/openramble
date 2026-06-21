@@ -187,3 +187,64 @@ Use primary or near-primary sources when changing product rules:
 - WCAG 2.2 target-size guidance sets a minimum bar for pointer/touch controls: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
 
 Research date for this guidance: 2026-06-12.
+
+## Build & Test
+
+```bash
+bun install                  # install deps; honors bun.lock
+bun test                     # 111 tests across 10 files; must stay 111/111
+bun run proof                # opencode-bridge proof
+bunx oxlint .                # lint (oxlint is not on the path; run via bunx)
+bunx tsc --noEmit            # typecheck
+```
+
+Do not commit code with failing tests. Do not bypass a failing test by skipping it. If a test is wrong, fix the test, document the change in the commit body, and surface the rationale in the PR description.
+
+## Code Style
+
+- Linter: `oxlint` (run via `bunx oxlint .`). No ESLint, no Prettier in this repo.
+- Type checker: `tsc --noEmit`. Strict mode is on in `tsconfig.json`.
+- Commit format: Conventional Commits. PR titles must match `^(feat|fix|docs|chore|refactor|test|perf|build|ci)(\([a-zA-Z0-9-]+\))?!?:\s.+` — enforced in CI.
+- Imports: ESM, no default exports for new modules, prefer named.
+- Filenames: `kebab-case` for new files. Match the existing convention in `src/compiler/`.
+- Max file size: 500 lines. Max function size: 50 lines. Max parameters: 4. Max cyclomatic complexity: 10. If a function needs more, split it.
+- No comments unless the user asks. Self-explanatory code > commented code.
+
+## Contribution Flow (open source)
+
+1. Read `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+2. Open or find a GitHub issue describing the problem.
+3. Create a feature branch from `main` (`feat/<short-slug>`, `fix/<short-slug>`, `chore/<short-slug>`).
+4. Use Conventional Commits on the PR title.
+5. Push the branch, open a PR, fill in the PR template, link the issue with `Closes #<n>`.
+6. CI must be green: `ci / lint`, `ci / typecheck`, `ci / test`, `commit-lint`, `pr-title`. 1+ reviewer approval. Conversation resolution required.
+7. Squash-merge once the branch is green and reviewed.
+
+## Release Flow (open source)
+
+- Conventional commits on `main` drive a release-please Release PR.
+- Merging the Release PR creates a GitHub Release and tag `v<version>`.
+- The `released` event triggers `macos-release.yml`, which builds, signs, notarizes, and attaches a `.dmg`.
+- npm publish uses OIDC trusted publishing with `--provenance`. No long-lived `NPM_TOKEN` after the first cut.
+- macOS code signing identity: `Open-Ramble Dev` (Developer ID). Reuse, do not mint a new cert.
+
+## AI Authorship Posture
+
+AI-assisted PRs are welcome. The PR template requires a human-authorship signal: "I understand this change and can defend it." A PR opened by a bot without a human in the loop is a closing offense. The human author is the one who clicks Merge.
+
+## Do / Don't
+
+**Do.**
+- Read the linked issue and the relevant spec before writing code.
+- Match existing patterns unless they are clearly suboptimal.
+- Verify locally (`bun test`, `bunx oxlint .`, `bunx tsc --noEmit`) before pushing.
+- Cite primary sources in commit bodies and PR descriptions.
+- Fail loudly at evidence boundaries (no fake-safe fallbacks).
+
+**Don't.**
+- Add heavy dependencies, cloud STT, Whisper, or expand native capture scope without explicit approval.
+- Hardcode OpenCode server URLs, session IDs, user emails, provider credentials, or local absolute paths.
+- Write to `memory/` or `MEMORY.md`.
+- Ad-hoc sign the macOS helper; always use the `/sign` skill or `apps/macos-helper/install.sh`.
+- Open a PR you cannot defend in code review.
+- Ship a release that fails the prompt quality gate (see Prompt Quality Gate above).
