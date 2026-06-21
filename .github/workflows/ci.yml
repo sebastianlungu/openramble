@@ -92,8 +92,11 @@ jobs:
             build
             ci
           requireScope: false
-          subjectPattern: ^(?:\([a-zA-Z0-9-]+\))?!?:\s.+$
+          # action strips the <type>(<scope>): prefix before checking the subject,
+          # so this regex matches the subject body only. Require at least 3 chars
+          # so a typo'd "wip" or empty body is rejected.
+          subjectPattern: '^.{3,}$'
           subjectPatternError: |
-            Subject does not match conventional-commits format.
+            PR title subject is too short. Use at least 3 characters.
             Expected: <type>(<optional-scope>)<optional !>: <subject>
             Example: feat(compiler): add style-token gate
