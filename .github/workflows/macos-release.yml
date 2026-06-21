@@ -1,0 +1,221 @@
+name: macos-release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag to upload the DMG to (defaults to the latest published release tag)"
+        required: false
+        type: string
+
+concurrency:
+  group: macos-release-${{ github.event.release.id || github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  build:
+    name: build-signed-dmg-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-14
+          - arch: arm64
+            runner: macos-14-arm64
+
+    permissions:
+      contents: write
+
+    timeout-minutes: 30
+
+    env:
+      BUNDLE_ID: ai.open-ramble.macos-helper
+      SIGN_IDENTITY: Open-Ramble Dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Import Apple Developer ID certificate
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$RUNNER_TEMP/or-build.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          P12_PATH="$RUNNER_TEMP/cert.p12"
+          EXISTING_KEYCHAINS="$(security list-keychains -d user | tr -d '"')"
+
+          cleanup() {
+            security list-keychains -d user -s $EXISTING_KEYCHAINS 2>/dev/null || true
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+            rm -f "$P12_PATH"
+            rm -f "$RUNNER_TEMP/asc/AuthKey_${APPLE_API_KEY_ID}.p8"
+          }
+          trap cleanup EXIT
+
+          echo "Creating temporary keychain..."
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "Importing Developer ID certificate..."
+          echo -n "$APPLE_CERTIFICATE_P12" | base64 --decode > "$P12_PATH"
+          chmod 600 "$P12_PATH"
+          security import "$P12_PATH" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "Verifying codesigning identity is available..."
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Stage App Store Connect API key
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asc"
+          echo -n "$APPLE_API_KEY_P8" | base64 --decode > "$RUNNER_TEMP/asc/AuthKey_${APPLE_API_KEY_ID}.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey_${APPLE_API_KEY_ID}.p8"
+          ls -la "$RUNNER_TEMP/asc"
+
+      - name: Build helper
+        working-directory: apps/macos-helper
+        run: |
+          set -euo pipefail
+          echo "Building release binary for ${{ matrix.arch }}..."
+          swift build -c release
+
+          BUILT_BINARY=".build/release/open-ramble"
+          if [ ! -x "$BUILT_BINARY" ]; then
+            echo "Built binary not found or not executable: $BUILT_BINARY" >&2
+            exit 1
+          fi
+
+          echo "Assembling .app bundle..."
+          APP="$RUNNER_TEMP/Open-Ramble.app"
+          rm -rf "$APP"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          cp "$BUILT_BINARY" "$APP/Contents/MacOS/open-ramble"
+          cp Sources/OpenRamble/Info.plist "$APP/Contents/Info.plist"
+
+          /usr/libexec/PlistBuddy \
+            -c "Set :OpenRambleRepoRoot $GITHUB_WORKSPACE" \
+            "$APP/Contents/Info.plist" 2>/dev/null || \
+            /usr/libexec/PlistBuddy \
+              -c "Add :OpenRambleRepoRoot string $GITHUB_WORKSPACE" \
+              "$APP/Contents/Info.plist"
+
+          /usr/libexec/PlistBuddy -c "Print :NSSpeechRecognitionUsageDescription" "$APP/Contents/Info.plist" >/dev/null
+          /usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$APP/Contents/Info.plist" >/dev/null
+
+          echo "Built bundle at: $APP"
+          ls -la "$APP/Contents"
+          echo "APP_BUNDLE=$APP" >> "$GITHUB_ENV"
+
+      - name: Code sign
+        run: |
+          set -euo pipefail
+          echo "Signing with: $SIGN_IDENTITY"
+          codesign --deep --force --options runtime --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
+            --sign "$SIGN_IDENTITY" \
+            --identifier "$BUNDLE_ID" \
+            "$APP_BUNDLE"
+          echo "Verifying signature..."
+          codesign --verify --verbose=2 "$APP_BUNDLE"
+          codesign -dv --verbose=2 "$APP_BUNDLE" 2>&1 | head -20
+
+      - name: Notarize
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          KEY_PATH="$RUNNER_TEMP/asc/AuthKey_${APPLE_API_KEY_ID}.p8"
+          ZIP_PATH="$RUNNER_TEMP/Open-Ramble.zip"
+
+          if [ ! -f "$KEY_PATH" ]; then
+            echo "ASC API key not staged: $KEY_PATH" >&2
+            exit 1
+          fi
+
+          echo "Creating notarization zip..."
+          ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+
+          echo "Submitting to notary service (wait up to 10m)..."
+          set +e
+          timeout 600 xcrun notarytool submit "$ZIP_PATH" \
+            --key "$KEY_PATH" \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER_ID" \
+            --wait
+          rc=$?
+          set -e
+
+          if [ $rc -ne 0 ]; then
+            echo "::error::Notarization failed with exit code $rc"
+            echo "::error::Failing the macOS release job only; release-please/npm publish is independent."
+            exit 1
+          fi
+
+          echo "Notarization accepted."
+
+      - name: Staple notarization ticket
+        run: |
+          set -euo pipefail
+          xcrun stapler staple "$APP_BUNDLE"
+          xcrun stapler validate "$APP_BUNDLE"
+
+      - name: Package DMG
+        run: |
+          set -euo pipefail
+          DMG_DIR="$RUNNER_TEMP/dmg-stage"
+          rm -rf "$DMG_DIR"
+          mkdir -p "$DMG_DIR"
+
+          cp -R "$APP_BUNDLE" "$DMG_DIR/Open-Ramble.app"
+          ln -s /Applications "$DMG_DIR/Applications"
+
+          DMG_PATH="$RUNNER_TEMP/open-ramble-macos-${{ matrix.arch }}.dmg"
+          rm -f "$DMG_PATH"
+
+          hdiutil create -volname "Open-Ramble" \
+            -srcfolder "$DMG_DIR" \
+            -ov -format UDZO \
+            "$DMG_PATH"
+
+          echo "Created DMG: $DMG_PATH"
+          ls -la "$DMG_PATH"
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
+
+      - name: Upload DMG to release
+        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0 # v2.0.6
+        with:
+          tag_name: ${{ github.event.release.tag_name || inputs.tag_name }}
+          files: ${{ env.DMG_PATH }}
+          fail_on_unmatched_files: true
