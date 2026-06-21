@@ -29,13 +29,27 @@ Hidden context such as screenshot paths, cursor timeline, and redaction output i
 
 ## Quick start
 
-Install with [Bun](https://bun.sh):
+### Prerequisites
+
+- [Bun](https://bun.sh) `1.3.11` (pinned via `package.json#packageManager`).
+- macOS `14+` (Sonoma) if you plan to build the native capture helper in `apps/macos-helper/`. The TypeScript compiler and CLI run anywhere Bun does.
+- A running OpenCode server. Default convention: `http://localhost:4096`. Override with `--opencode-server` or the `OPENCODE_SERVER` env var.
+
+### Install (end users, once published)
+
+The `open-ramble` npm package is not yet on the registry at v0.1.0. When the first release ships, end users will install the CLI with:
+
+```bash
+npm install -g open-ramble
+```
+
+### Install (from a local checkout)
 
 ```bash
 bun install
 ```
 
-Run the compiler from the checked-out repo against a transcript and screenshots:
+### Run the compiler
 
 ```bash
 bun run open-ramble compile \
@@ -191,4 +205,12 @@ The native capture helper is a Swift package using ScreenCaptureKit and Apple Sp
 
 ## Status
 
-Phase 1 MVP is shipping. The compiler, OpenCode bridge, validation gate, redaction, preview, and artifact pipeline are working. The macOS native capture helper is scaffolded but not yet wired into the CLI.
+Phase 1 MVP is shipping: the compiler, OpenCode bridge, validation gate, redaction, preview, and artifact pipeline are working. The macOS native capture helper is scaffolded in `apps/macos-helper/` but not yet wired into the CLI. The `open-ramble` npm package is not yet published at v0.1.0; the published install path will be `npm install -g open-ramble` once the first release is cut.
+
+## Community
+
+- [LICENSE](LICENSE) — MIT terms for this project.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to file issues, branch, and ship a PR.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community norms and enforcement.
+- [SECURITY.md](SECURITY.md) — how to report vulnerabilities privately.
+- [AGENTS.md](AGENTS.md) — canonical agent-and-human guidance for this repo.

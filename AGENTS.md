@@ -192,7 +192,7 @@ Research date for this guidance: 2026-06-12.
 
 ```bash
 bun install                  # install deps; honors bun.lock
-bun test                     # 111 tests across 10 files; must stay 111/111
+bun test                     # 135 tests across 12 files; must stay 135/135
 bun run proof                # opencode-bridge proof
 bunx oxlint .                # lint (oxlint is not on the path; run via bunx)
 bunx tsc --noEmit            # typecheck
@@ -212,7 +212,7 @@ Do not commit code with failing tests. Do not bypass a failing test by skipping 
 
 ## Contribution Flow (open source)
 
-1. Read `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 2. Open or find a GitHub issue describing the problem.
 3. Create a feature branch from `main` (`feat/<short-slug>`, `fix/<short-slug>`, `chore/<short-slug>`).
 4. Use Conventional Commits on the PR title.
@@ -222,9 +222,9 @@ Do not commit code with failing tests. Do not bypass a failing test by skipping 
 
 ## Release Flow (open source)
 
-- Conventional commits on `main` drive a release-please Release PR.
+- Conventional commits on `main` drive a release-please Release PR. Workflow: `.github/workflows/release-please.yml`.
 - Merging the Release PR creates a GitHub Release and tag `v<version>`.
-- The `released` event triggers `macos-release.yml`, which builds, signs, notarizes, and attaches a `.dmg`.
+- The `released` event triggers `.github/workflows/macos-release.yml`, which builds, signs, notarizes, and attaches a `.dmg`.
 - npm publish uses OIDC trusted publishing with `--provenance`. No long-lived `NPM_TOKEN` after the first cut.
 - macOS code signing identity: `Open-Ramble Dev` (Developer ID). Reuse, do not mint a new cert.
 
