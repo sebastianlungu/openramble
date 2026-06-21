@@ -1,0 +1,83 @@
+name: Bug report
+description: Report a bug, crash, or unexpected behavior in Open-Ramble.
+title: "[bug] "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in every required field below.
+        A maintainer will triage the report and follow up if more information is needed.
+
+  - type: input
+    id: version
+    attributes:
+      label: Open-Ramble version
+      description: Output of `bunx open-ramble --version` or the commit SHA you are running.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: The OS where the bug was observed.
+      options:
+        - macOS 15
+        - macOS 14
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and its impact.
+      placeholder: |
+        The compiler returned an empty `visible-prompt.md` even though
+        the screenshots clearly showed the OpenCode settings page.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact transcript, screenshots, CLI flags, and environment needed to reproduce.
+      placeholder: |
+        1. Run `bun run open-ramble compile --transcript ./t.md --screenshots ./s/1.png ...`
+        2. With OpenCode server at `http://localhost:4096` and session `<id>`
+        3. Observe: `visible-prompt.md` is empty.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or artifacts
+      description: Paste relevant logs here, or attach them. Include `run.json` if available.
+    validations:
+      required: false
+
+  - type: input
+    id: opencode
+    attributes:
+      label: OpenCode server version
+      description: Output of `curl http://localhost:4096/doc` or the version string.
+      placeholder: "1.0.0"
+    validations:
+      required: false

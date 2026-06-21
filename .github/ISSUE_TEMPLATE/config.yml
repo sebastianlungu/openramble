@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/open-ramble/open-ramble/discussions
+    about: General questions, ideas, and community conversation.
+  - name: Security advisories
+    url: https://github.com/open-ramble/open-ramble/security/advisories/new
+    about: Please report security issues privately, not as a public issue.

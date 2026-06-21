@@ -1,0 +1,61 @@
+name: "Open-Ramble CodeQL"
+
+# CodeQL configuration for Open-Ramble.
+# Loaded by GitHub Code Scanning once "Default setup" is enabled in
+# the repository web UI (Settings -> Code security and analysis ->
+# Code scanning -> Default). This file tells the GitHub-managed
+# workflow which languages to analyze and which query packs to run.
+#
+# When CodeQL default setup is on, GitHub will pick this up
+# automatically. Until then, the file is inert.
+#
+# Languages:
+#   - javascript-typescript: covers the TypeScript compiler, the
+#     opencode-bridge proof harness, the Bun test runner, and any
+#     future TS/JS tooling in the repo.
+#   - swift: covers the macOS helper at apps/macos-helper and any
+#     future Swift code.
+#
+# Query packs:
+#   - security-and-quality: the default set, includes both security
+#     queries (injection, path traversal, unsafe deserialization,
+#     etc.) and quality/maintainability queries.
+#   - security-extended: added on top of security-and-quality for
+#     the JS/TS language only, where it materially improves coverage
+#     for modern JS/TS vulnerability classes.
+#
+# Paths:
+#   - src: TypeScript compiler, tests, fixtures, opencode-bridge
+#     (which lives at src/opencode-bridge/ and is therefore covered
+#     transitively).
+#   - apps: native helpers and any other apps in the monorepo.
+#   - apps/macos-helper/Sources: listed explicitly so Swift coverage
+#     is unambiguous. The macOS helper is the only Swift code on
+#     the default branch; without this entry, CodeQL's language
+#     autodetection must infer Swift from apps/ alone, which has
+#     historically produced "no languages to analyze" on the
+#     default-setup run.
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+    languages:
+      - javascript-typescript
+
+paths:
+  - src
+  - apps
+  - apps/macos-helper/Sources
+
+paths-ignore:
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/__tests__/**"
+  - "**/coverage/**"
+  - "**/node_modules/**"
+  - "**/.open-ramble/**"
+  - "apps/macos-helper/.build/**"
+  - "apps/macos-helper/Package.resolved"
+  - "docs/**"
+  - "openspec/**"
+  - "**/*.md"
