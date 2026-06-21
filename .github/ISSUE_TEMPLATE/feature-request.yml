@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a new behavior, CLI flag, or product capability.
+title: "[feat] "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a feature. Frame the request as a problem
+        and a proposed solution. A maintainer will review and respond.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve? Who is affected?
+      placeholder: |
+        Today, when a capture has no cursor pauses, the warning is logged
+        but the run still completes. This means a downstream agent gets a
+        prompt with a hard "same" reference and no target. Users with
+        no cursor emphasis cannot tell whether the system understood them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: One specific approach. Explain how the user would invoke it and what would change.
+      placeholder: |
+        Add a new flag `--block-on-cursor-gap` that fails the run at
+        validate time if no cursor pauses are detected. Default off
+        to preserve backwards compatibility.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you considered, and why this one is preferred.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How would you verify the feature works?
+    validations:
+      required: true
