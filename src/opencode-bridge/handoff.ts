@@ -41,7 +41,7 @@ export async function executeHandoff(
   let connection: ServerConnection | null = null
 
   try {
-    connection = createClient(input.opencodeServerUrl)
+    connection = createClient(input.opencodeServerUrl) as ServerConnection
   } catch (err) {
     result.errors.push(
       `Failed to create OpenCode client: ${err instanceof Error ? err.message : String(err)}`
@@ -49,7 +49,11 @@ export async function executeHandoff(
   }
 
   if (connection && input.sessionId) {
-    result = await tryHiddenInjection(connection, input, result)
+    result = await tryHiddenInjection(
+      connection,
+      input as HandoffInput & { sessionId: string },
+      result
+    )
   }
 
   if (connection) {

@@ -135,8 +135,9 @@ describe("macos-release workflow", () => {
     expect(signStep?.run).toContain("--options runtime")
     expect(signStep?.run).toContain("--timestamp")
     expect(signStep?.run).toContain("--sign")
-    expect(buildJob?.env?.SIGN_IDENTITY).toBe("Open-Ramble Dev")
-    expect(buildJob?.env?.BUNDLE_ID).toBe("ai.open-ramble.macos-helper")
+    const buildJobEnv = (buildJob as { env?: Record<string, string> } | undefined)?.env
+    expect(buildJobEnv?.SIGN_IDENTITY).toBe("Open-Ramble Dev")
+    expect(buildJobEnv?.BUNDLE_ID).toBe("ai.open-ramble.macos-helper")
   })
 
   test("notarizes with xcrun notarytool and waits with a 10m timeout", async () => {
@@ -248,7 +249,7 @@ describe("macos-release workflow", () => {
 
   test("build job has a timeout-minutes cap", async () => {
     const wf = await loadWorkflow()
-    const buildJob = wf.jobs?.build
+    const buildJob = wf.jobs?.build as { "timeout-minutes"?: number } | undefined
     expect(buildJob).toBeDefined()
     expect(buildJob?.["timeout-minutes"]).toBe(30)
   })
