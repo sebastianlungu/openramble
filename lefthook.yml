@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx}"
+      run: bunx oxlint {staged_files}
+    typecheck:
+      run: bunx tsc --noEmit
+    test:
+      run: bun test --bail
+
+pre-push:
+  commands:
+    frozen-lockfile:
+      run: bun install --frozen-lockfile

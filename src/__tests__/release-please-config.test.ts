@@ -50,6 +50,17 @@ describe("release-please workflow", () => {
     expect(workflow).toContain("id-token: write")
   })
 
+  test("uses GitHub App client ID variable and release_created publish gating", async () => {
+    const workflow = await loadText(WORKFLOW_PATH)
+    expect(workflow).toContain("issues: write")
+    expect(workflow).toContain("client-id: ${{ vars.RELEASE_PLEASE_APP_CLIENT_ID }}")
+    expect(workflow).toContain(
+      "private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}"
+    )
+    expect(workflow).toContain("if: steps.release-please.outputs.release_created")
+    expect(workflow).not.toContain("app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}")
+  })
+
   test("does not reference NPM_TOKEN or NODE_AUTH_TOKEN", async () => {
     const workflow = await loadText(WORKFLOW_PATH)
     expect(workflow).not.toMatch(/NPM_TOKEN/)
