@@ -14,10 +14,16 @@
   "scripts": {
     "open-ramble": "bun run src/index.ts",
     "test": "bun test",
+    "lint": "bunx oxlint .",
+    "lint:fix": "bunx oxlint --fix .",
+    "typecheck": "bunx tsc --noEmit",
+    "check": "bun run lint && bun run typecheck && bun run test",
     "proof": "bun run src/opencode-bridge/proof.ts",
-    "start": "bun run src/index.ts"
+    "start": "bun run src/index.ts",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "lefthook": "^1.11.3"
   }
 }
