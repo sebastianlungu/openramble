@@ -214,7 +214,7 @@ jobs:
           echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
 
       - name: Upload DMG to release
-        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0 # v2.0.6
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ github.event.release.tag_name || inputs.tag_name }}
           files: ${{ env.DMG_PATH }}
